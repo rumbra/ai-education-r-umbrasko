@@ -10,6 +10,7 @@
 :root{
   --bg:#0a0a0f;--bg2:#0d0d14;
   --green:#00ff88;--green3:#004d28;
+  --red:#DC2626;--red3:#991B1B;
   --cyan:#00e5ff;--amber:#ffb800;--purple:#a855f7;
   --text:#e0e0e8;--muted:#6b6b80;
   --mono:'JetBrains Mono','SF Mono',monospace;--sans:'Outfit','SF Pro Display',-apple-system,sans-serif;
@@ -44,19 +45,18 @@ h1 .green{color:var(--green)}
   text-decoration:none;color:var(--text);transition:all .3s;cursor:pointer;opacity:0;animation:fadeUp .8s forwards}
 .card:nth-child(1){animation-delay:.9s}
 .card:nth-child(2){animation-delay:1.1s}
-.card:nth-child(3){animation-delay:1.3s}
-.card:nth-child(4){animation-delay:1.5s}
 .card:hover{border-color:var(--green3);transform:translateY(-3px)}
-.card-num{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:3px;margin-bottom:10px}
+.card.card-red:hover{border-color:var(--red3)}
 .card-title{font-size:18px;font-weight:700;margin-bottom:6px}
 .card-desc{font-size:13px;color:var(--muted);line-height:1.6}
-.card-tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:3px;margin-top:10px;
+.card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:3px;
   border:1px solid #1a1a2e;color:var(--muted)}
-.card-tag.live{border-color:var(--green3);color:var(--green)}
-.card-tag.soon{border-color:#1a1a2e;color:var(--muted)}
+.tag.green{border-color:var(--green3);color:var(--green)}
+.tag.red{border-color:var(--red3);color:var(--red)}
 
 .footer{margin-top:60px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px;
-  opacity:0;animation:fadeIn 1s 1.5s forwards;text-align:center}
+  opacity:0;animation:fadeIn 1s 1.3s forwards;text-align:center}
 </style>
 </head>
 <body>
@@ -67,10 +67,19 @@ h1 .green{color:var(--green)}
 
 <div class="grid">
   <a class="card" href="ai-deep-dive.html">
-    <div class="card-num">MODULE 01</div>
     <div class="card-title">How AI Coding Actually Works</div>
     <div class="card-desc">From neural weights to autonomous coding agents. Tokenization, attention, fine-tuning, the agent loop, context windows &mdash; the full picture.</div>
-    <span class="card-tag live">8 chapters // live</span>
+    <div class="card-tags">
+      <span class="tag green">General AI</span>
+      <span class="tag">8 chapters</span>
+    </div>
+  </a>
+  <a class="card card-red" href="kali-cc-final.html">
+    <div class="card-title">Kali &times; Claude Code &mdash; Hacker's Field Guide</div>
+    <div class="card-desc">Pentesting with AI. Recon, scanning, exploitation, post-exploitation &mdash; every phase supercharged with Claude Code on Kali Linux.</div>
+    <div class="card-tags">
+      <span class="tag red">Cybersecurity</span>
+    </div>
   </a>
 </div>
 

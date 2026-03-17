@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<title>KALI × CLAUDE CODE // Hacker's Field Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Rajdhani:wght@400;500;600;700&family=Barlow:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;--bg2:#0f0f0f;--bg3:#141414;--surface:#1a1a1a;
+  --red:#DC2626;--red2:#EF4444;--red3:#991B1B;--red-g:rgba(220,38,38,.06);
+  --green:#22C55E;--amber:#F59E0B;--purple:#A855F7;--cyan:#06B6D4;
+  --text:#D4D4D4;--dim:#666;--dim2:#333;--dim3:#222;
+  --mono:'IBM Plex Mono',monospace;--sans:'Barlow',sans-serif;--head:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;-webkit-overflow-scrolling:touch}
+
+/* Particle canvas */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* Subtle grid */
+body::before{content:'';position:fixed;inset:0;opacity:.02;pointer-events:none;z-index:2;
+  background-image:linear-gradient(var(--red) 1px,transparent 1px),linear-gradient(90deg,var(--red) 1px,transparent 1px);
+  background-size:60px 60px}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--red3)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slideIn{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes pulseGlow{0%,100%{opacity:.08}50%{opacity:.2}}
+@keyframes scanDown{0%{top:-2px}100%{top:calc(100% + 2px)}}
+@keyframes dragonPulse{0%,100%{filter:drop-shadow(0 0 20px rgba(220,38,38,.15))}50%{filter:drop-shadow(0 0 40px rgba(220,38,38,.35))}}
+
+.rv{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.rv.v{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}.d5{transition-delay:.5s}
+
+/* ===== HERO ===== */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:50px 28px;text-align:center;z-index:1}
+
+.kali-dragon{width:min(420px,90vw);margin-bottom:28px;opacity:0;animation:fadeIn 1.5s .2s forwards;animation-fill-mode:forwards}
+.kali-dragon img{width:100%;height:auto;animation:dragonPulse 4s ease-in-out infinite}
+
+.hero-label{font-family:var(--mono);font-size:13px;letter-spacing:6px;color:var(--red);text-transform:uppercase;
+  opacity:0;animation:fadeIn .8s .8s forwards}
+.hero h1{font-family:var(--head);font-size:clamp(48px,10vw,96px);font-weight:700;letter-spacing:-1px;line-height:.95;margin-top:18px;
+  opacity:0;animation:fadeUp 1s 1s forwards}
+.hero h1 .r{color:var(--red)}
+.hero-sub{font-size:18px;color:var(--dim);max-width:520px;margin-top:18px;line-height:1.7;
+  opacity:0;animation:fadeIn .8s 1.6s forwards}
+.hero-scroll{font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:3px;margin-top:48px;
+  opacity:0;animation:fadeIn .8s 2.2s forwards;cursor:pointer}
+
+/* ===== SECTIONS ===== */
+.sec{padding:100px 28px;position:relative;z-index:1}.sec-inner{max-width:900px;margin:0 auto}
+.sec-dark{background:var(--bg2)}
+.sec-red{background:var(--bg);border-top:2px solid var(--red3);border-bottom:2px solid var(--red3)}
+
+.tag{font-family:var(--mono);font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--red);margin-bottom:12px}
+.h2{font-family:var(--head);font-size:clamp(30px,6vw,54px);font-weight:700;letter-spacing:0px;line-height:1.15;margin-bottom:14px}
+.h2 .r{color:var(--red2)}.h2 .g{color:var(--green)}.h2 .p{color:var(--purple)}.h2 .a{color:var(--amber)}
+.desc{font-size:17px;color:var(--dim);line-height:1.7;max-width:560px;margin-bottom:36px}
+
+/* VISUAL FLOW */
+.flow{display:flex;align-items:center;gap:0;margin:28px 0;overflow-x:auto;padding:10px 0}
+.flow-node{text-align:center;padding:18px 20px;background:var(--surface);border:1px solid var(--dim2);border-radius:12px;min-width:110px;flex-shrink:0;transition:border-color .3s}
+.flow-node:hover{border-color:var(--red)}
+.flow-node .fn-icon{font-size:28px;margin-bottom:6px}
+.flow-node .fn-title{font-family:var(--mono);font-size:13px;font-weight:600}
+.flow-node .fn-sub{font-size:12px;color:var(--dim);margin-top:3px}
+.flow-arr{color:var(--dim2);font-size:22px;padding:0 5px;flex-shrink:0}
+
+/* TOOL GRID */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:20px 0}
+.tcard{background:var(--surface);border:1px solid var(--dim2);border-radius:10px;padding:18px 20px;transition:all .3s;position:relative;overflow:hidden}
+.tcard:hover{border-color:var(--red);transform:translateY(-2px)}
+.tcard::after{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--c,var(--red));border-radius:4px 0 0 4px}
+.tcard .tn{font-family:var(--mono);font-size:16px;font-weight:600;margin-bottom:5px;color:var(--text)}
+.tcard .tt{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.tcard .td{font-size:14px;color:var(--dim);line-height:1.6}
+
+/* BIG CARDS */
+.bcard{background:var(--surface);border:1px solid var(--dim2);border-radius:12px;padding:24px 28px;margin:14px 0;position:relative;overflow:hidden;transition:border-color .3s}
+.bcard:hover{border-color:var(--red)}
+.bcard .bc-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:4px 14px;border-radius:4px;margin-bottom:10px;letter-spacing:1px}
+.bcard .bc-title{font-size:21px;font-weight:700;margin-bottom:6px}
+.bcard .bc-src{font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:10px}
+.bcard .bc-body{font-size:15px;color:var(--dim);line-height:1.7}
+.bcard .bc-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.bcard .bc-tag{font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:20px;border:1px solid var(--dim2);color:var(--dim)}
+.bcard .bc-tag.hot{border-color:var(--red3);color:var(--red2)}
+.bcard .bc-tag.go{border-color:rgba(34,197,94,.3);color:var(--green)}
+
+/* SUPERPOWERED TOOL */
+.spower{background:var(--surface);border:1px solid var(--dim2);border-radius:12px;padding:22px 24px;margin:12px 0;display:flex;gap:18px;align-items:flex-start;transition:border-color .3s}
+.spower:hover{border-color:var(--red)}
+.spower .sp-tool{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--red2);min-width:100px;flex-shrink:0}
+.spower .sp-plus{color:var(--dim2);font-size:22px;flex-shrink:0;margin-top:-2px}
+.spower .sp-body{flex:1}
+.spower .sp-title{font-size:16px;font-weight:600;margin-bottom:4px}
+.spower .sp-desc{font-size:14px;color:var(--dim);line-height:1.7}
+
+/* PROMPT BOX */
+.prompt-box{background:#111;border:1px solid var(--dim2);border-left:4px solid var(--red);border-radius:0 10px 10px 0;padding:18px 22px;margin:14px 0;font-family:var(--mono);font-size:14px;line-height:1.9;color:var(--text)}
+.prompt-box .pb-label{font-size:11px;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin-bottom:8px}
+
+/* DANGER ZONE */
+.danger-item{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--dim3)}
+.danger-item:last-child{border:none}
+.danger-item .di-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.danger-item .di-title{font-size:17px;font-weight:600;margin-bottom:4px}
+.danger-item .di-desc{font-size:14px;color:var(--dim);line-height:1.6}
+
+/* CODE MINI */
+.code-mini{background:#0d0d0d;border:1px solid var(--dim2);border-radius:10px;padding:18px 22px;margin:16px 0;font-family:var(--mono);font-size:13px;line-height:2.1;overflow-x:auto}
+.ck{color:var(--red2)}.cv{color:var(--green)}.cm{color:var(--dim)}.cn{color:var(--amber)}
+
+/* TERMINAL */
+.term{background:#0d0d0d;border:1px solid var(--dim2);border-radius:10px;overflow:hidden;margin:20px 0;position:relative}
+.term::after{content:'';position:absolute;left:0;right:0;height:1px;background:var(--red);opacity:.1;animation:scanDown 4s linear infinite}
+.term-bar{display:flex;align-items:center;gap:6px;padding:10px 16px;background:#080808;border-bottom:1px solid var(--dim2)}
+.term-bar .d{width:10px;height:10px;border-radius:50%}
+.term-bar .d:nth-child(1){background:#EF4444}.term-bar .d:nth-child(2){background:#F59E0B}.term-bar .d:nth-child(3){background:#22C55E}
+.term-bar span{font-family:var(--mono);font-size:12px;color:var(--dim);margin-left:8px}
+.term-body{padding:16px 20px;font-family:var(--mono);font-size:14px;line-height:2.2}
+.tp{color:var(--red2)}.tc{color:var(--text)}.to{color:var(--dim)}.tf{color:var(--green)}
+.tw{color:var(--amber)}.te{color:var(--red2)}.tok{color:var(--green)}
+.tline{opacity:0;animation:slideIn .4s ease forwards}
+
+/* BANNER */
+.banner{padding:18px 22px;border-radius:10px;margin:20px 0;font-size:15px;line-height:1.7;display:flex;gap:12px;align-items:flex-start}
+.banner-red{background:rgba(220,38,38,.04);border:1px solid rgba(220,38,38,.2)}
+.banner-dim{background:rgba(100,100,100,.04);border:1px solid var(--dim2)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:768px){
+  .grid2{grid-template-columns:1fr}
+  .tgrid{grid-template-columns:1fr 1fr}
+  .flow{flex-wrap:wrap;justify-content:center;gap:8px}
+  .flow-arr{display:none}
+  .flow-node{min-width:90px;padding:14px 16px}
+  .flow-node .fn-icon{font-size:24px}
+  .sec{padding:60px 20px}
+  .hero{padding:36px 20px}
+  .hero h1{font-size:clamp(36px,12vw,56px)}
+  .h2{font-size:clamp(26px,7vw,40px)}
+  .spower{flex-direction:column;gap:10px}
+  .spower .sp-tool{min-width:auto;font-size:16px}
+  .spower .sp-plus{display:none}
+  .term-body{padding:14px 16px;font-size:13px;line-height:2}
+  .prompt-box{font-size:12px;padding:16px 18px}
+  .code-mini{font-size:11px;padding:14px 16px}
+  .bcard{padding:20px}
+  .banner{flex-direction:column;gap:8px;font-size:14px}
+  .danger-item{gap:10px}
+  .danger-item .di-title{font-size:15px}
+  .danger-item .di-desc{font-size:13px}
+}
+@media(max-width:420px){
+  .tgrid{grid-template-columns:1fr}
+  .hero h1{font-size:32px}
+  .h2{font-size:26px}
+  .desc{font-size:15px}
+  .tcard .tn{font-size:15px}
+  .tcard .td{font-size:13px}
+  .bcard .bc-title{font-size:18px}
+  .bcard .bc-body{font-size:14px}
+  .kali-dragon{width:90vw}
+}
+
+.sep{height:1px;background:var(--dim3);margin:40px 0}
+
+.footer{padding:50px 28px;text-align:center;border-top:1px solid var(--dim3);position:relative;z-index:1}
+.footer p{font-family:var(--mono);font-size:11px;color:var(--dim2);letter-spacing:4px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<!-- ██████ HERO ██████ -->
+<section class="hero">
+  <div class="kali-dragon">
+    <img src="https://techlabs.blog/images/easyblog_articles/84/b2ap3_thumbnail_kali-linux-950x475_Kali-linux-950x475.png" alt="Kali Linux" style="width:100%;height:100%;object-fit:contain">
+  </div>
+
+  <div class="hero-label">CYBERSECURITY × AI</div>
+  <h1>KALI <span class="r">×</span> CLAUDE CODE</h1>
+  <p class="hero-sub">AI that drives your Kali tools, reasons about attacks, and writes reports — from one terminal session.</p>
+  <div class="hero-scroll" onclick="document.getElementById('s1').scrollIntoView()">▼ SCROLL ▼</div>
+</section>
+
+<!-- ██████ HOW IT WORKS ██████ -->
+<section class="sec" id="s1">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">01 — HOW IT WORKS</div>
+  <div class="h2">You describe the goal.<br>Claude <span class="r">chains the tools</span>.</div>
+  <div class="desc">Claude Code lives in your terminal. It runs any Kali tool you have installed. One natural language prompt → it plans the attack, executes tools in sequence, reads the output, adapts, and reports.</div></div>
+
+  <div class="rv d1">
+  <div class="flow">
+    <div class="flow-node"><div class="fn-icon">🗣️</div><div class="fn-title">You</div><div class="fn-sub">"Pentest this box"</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node" style="border-color:var(--red3)"><div class="fn-icon">🧠</div><div class="fn-title" style="color:var(--red)">Thinks</div><div class="fn-sub">Plans steps</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">⚡</div><div class="fn-title">Runs tool</div><div class="fn-sub">nmap, sqlmap...</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">👁️</div><div class="fn-title">Reads output</div><div class="fn-sub">Finds vulns</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">🔄</div><div class="fn-title">Adapts</div><div class="fn-sub">Chains next</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node" style="border-color:rgba(34,197,94,.3)"><div class="fn-icon">📋</div><div class="fn-title" style="color:var(--green)">Reports</div><div class="fn-sub">CVSS scores</div></div>
+  </div></div>
+
+  <div class="rv d2">
+  <div class="term">
+    <div class="term-bar"><div class="d"></div><div class="d"></div><div class="d"></div><span>kali — claude code session</span></div>
+    <div class="term-body" id="heroTerm"></div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██████ KALI TOOLS ██████ -->
+<section class="sec sec-dark" id="s2">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">02 — ARSENAL</div>
+  <div class="h2">Kali tools Claude can <span class="r">drive</span></div></div>
+
+  <div class="rv d1"><p style="font-family:var(--mono);font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:8px">RECON & OSINT</p>
+  <div class="tgrid">
+    <div class="tcard" style="--c:var(--red)"><div class="tn">nmap</div><div class="td">Port scan, service + OS detection</div></div>
+    <div class="tcard" style="--c:var(--red)"><div class="tn">theHarvester</div><div class="td">Emails, subdomains, IPs from public sources</div></div>
+    <div class="tcard" style="--c:var(--red)"><div class="tn">Sherlock</div><div class="td">Username hunt across 400+ sites</div></div>
+    <div class="tcard" style="--c:var(--red)"><div class="tn">SpiderFoot</div><div class="td">200+ module OSINT automation</div></div>
+  </div></div>
+
+  <div class="rv d2"><p style="font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:3px;margin:14px 0 8px">WEB ATTACKS</p>
+  <div class="tgrid">
+    <div class="tcard" style="--c:var(--amber)"><div class="tn">Burp Suite</div><div class="td">Proxy, scan, repeat, exploit web apps</div></div>
+    <div class="tcard" style="--c:var(--amber)"><div class="tn">sqlmap</div><div class="td">Auto SQL injection + DB takeover</div></div>
+    <div class="tcard" style="--c:var(--amber)"><div class="tn">Nuclei</div><div class="td">8000+ vuln detection templates</div></div>
+    <div class="tcard" style="--c:var(--amber)"><div class="tn">ffuf</div><div class="td">Fast fuzzer — dirs, params, vhosts</div></div>
+  </div></div>
+
+  <div class="rv d3"><p style="font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:3px;margin:14px 0 8px">EXPLOITATION & CRACKING</p>
+  <div class="tgrid">
+    <div class="tcard" style="--c:var(--green)"><div class="tn">Metasploit</div><div class="td">Exploit framework + post-exploitation</div></div>
+    <div class="tcard" style="--c:var(--green)"><div class="tn">Hashcat</div><div class="td">GPU hash cracking, billions/sec</div></div>
+    <div class="tcard" style="--c:var(--green)"><div class="tn">John</div><div class="td">CPU password cracking, multi-format</div></div>
+    <div class="tcard" style="--c:var(--green)"><div class="tn">Gobuster</div><div class="td">Directory + subdomain brute force</div></div>
+  </div></div>
+
+  <div class="rv d4"><p style="font-family:var(--mono);font-size:12px;color:var(--purple);letter-spacing:3px;margin:14px 0 8px">FORENSICS & ANALYSIS</p>
+  <div class="tgrid">
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Volatility</div><div class="td">Memory forensics — RAM dump analysis</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Autopsy</div><div class="td">Disk image analysis + file recovery</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Wireshark</div><div class="td">Network packet capture + protocol analysis</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Sleuthkit</div><div class="td">File system forensics + timeline</div></div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██████ OSINT ██████ -->
+<section class="sec" id="s3">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">03 — OSINT</div>
+  <div class="h2">Intelligence gathering where <span class="p">AI dominates</span></div>
+  <div class="desc">OSINT produces mountains of data. Claude reads it all, cross-references, and connects dots a human would need hours to find.</div></div>
+
+  <div class="rv d1">
+  <div class="flow">
+    <div class="flow-node"><div class="fn-icon">🌐</div><div class="fn-title">Target name</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">🔍</div><div class="fn-title">Sherlock</div><div class="fn-sub">400+ social sites</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">🕸️</div><div class="fn-title">SpiderFoot</div><div class="fn-sub">200+ modules</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">📡</div><div class="fn-title">Shodan</div><div class="fn-sub">Exposed devices</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node" style="border-color:var(--red3)"><div class="fn-icon">🧠</div><div class="fn-title" style="color:var(--red)">Claude</div><div class="fn-sub">Full profile</div></div>
+  </div></div>
+
+  <div class="rv d2">
+  <div class="grid2">
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Maltego</div><div class="td">Visual link analysis — people, domains, IPs into relationship graphs</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Recon-ng</div><div class="td">Metasploit-style OSINT framework with modules for everything</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">holehe</div><div class="td">Check if email is registered on 100+ sites — no login needed</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">ExifTool</div><div class="td">GPS coords, camera info, timestamps from images & documents</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Photon</div><div class="td">Crawl websites extracting URLs, emails, files, JS endpoints</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Shodan CLI</div><div class="td">Search exposed devices, cameras, databases, industrial systems</div></div>
+  </div></div>
+
+  <div class="rv d3">
+  <div class="banner banner-dim">
+    <div>🧠</div>
+    <div>Claude's superpower in OSINT: it takes the <b style="color:var(--text)">output of 5 different tools</b>, cross-references usernames with emails with domains with IP ranges, and builds a coherent target profile — work that takes an analyst hours, done in one conversation.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██████████████████████████████████████████ -->
+<!-- ██████ CLAUDE ON STEROIDS ██████ -->
+<!-- ██████████████████████████████████████████ -->
+<section class="sec sec-red" id="steroids">
+<div class="sec-inner">
+  <div class="rv"><div class="tag" style="color:var(--red2)">04 — CLAUDE ON STEROIDS</div>
+  <div class="h2">Turning Claude into a <span class="r">cybersecurity weapon</span></div>
+  <div class="desc">Vanilla Claude Code is cautious. With the right skills, prompts, and permissions — it becomes a full-spectrum security tool.</div></div>
+
+  <div class="rv d1">
+  <div class="banner banner-red">
+    <div>⚠️</div>
+    <div><b style="color:var(--red2)">Authorized targets only.</b> HTB, TryHackMe, your own boxes, or approved bug bounty programs.</div>
+  </div></div>
+
+  <!-- SUPERPOWERED TOOLS -->
+  <div class="rv d1" style="margin-top:20px">
+  <p style="font-family:var(--mono);font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:12px">⚡ KALI TOOLS SUPERPOWERED WITH CLAUDE</p>
+
+  <div class="spower">
+    <div class="sp-tool">nmap</div><div class="sp-plus">+</div>
+    <div class="sp-body"><div class="sp-title">Claude reads scan results, prioritizes targets, suggests NSE scripts</div>
+    <div class="sp-desc">Vanilla nmap gives raw output. Claude interprets it — spots unusual ports, suggests next scan types, identifies attack vectors from version strings.</div></div>
+  </div>
+  <div class="spower">
+    <div class="sp-tool">Volatility</div><div class="sp-plus">+</div>
+    <div class="sp-body"><div class="sp-title">Memory forensics with reasoning — finds what plugins miss</div>
+    <div class="sp-desc">Claude runs Volatility plugins, cross-references suspicious processes with network connections, identifies injected DLLs, and builds a timeline of attacker activity.</div></div>
+  </div>
+  <div class="spower">
+    <div class="sp-tool">sqlmap</div><div class="sp-plus">+</div>
+    <div class="sp-body"><div class="sp-title">Claude identifies injection points BEFORE running sqlmap</div>
+    <div class="sp-desc">Reads the target app source, finds likely vulnerable parameters, then runs sqlmap with precision. Chains SQLi → credential dump → hashcat → lateral movement.</div></div>
+  </div>
+  <div class="spower">
+    <div class="sp-tool">Nuclei</div><div class="sp-plus">+</div>
+    <div class="sp-body"><div class="sp-title">Claude triages 8000 templates — only runs what matters</div>
+    <div class="sp-desc">Instead of blindly running all templates, Claude analyzes the target stack first, picks relevant templates, and chains confirmed vulns into exploitable attack paths.</div></div>
+  </div>
+  <div class="spower">
+    <div class="sp-tool">Sleuthkit</div><div class="sp-plus">+</div>
+    <div class="sp-body"><div class="sp-title">Disk forensics + AI pattern recognition = found evidence</div>
+    <div class="sp-desc">Claude carves deleted files, builds super-timelines, correlates browser history with file deletions, and writes court-ready forensic reports. Perfect for your DATI competition.</div></div>
+  </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- SKILL PACKS -->
+  <div class="rv d2">
+  <p style="font-family:var(--mono);font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:12px">📦 SKILL PACKS — DROP INTO .claude/skills/</p>
+
+  <div class="bcard">
+    <div class="bc-badge" style="background:var(--red3);color:var(--red2)">MOST POWERFUL</div>
+    <div class="bc-title">Transilience Community Tools</div>
+    <div class="bc-src">github.com/transilienceai/communitytools</div>
+    <div class="bc-body">46 attack types. 264 PortSwigger lab walkthroughs. 35 specialized agents for SQL injection, XSS, SSRF, JWT attacks, OAuth flows, and more. A 7-phase pentest orchestrator. Drop in and Claude knows full attack methodology.</div>
+    <div class="bc-tags"><span class="bc-tag hot">46 ATTACK TYPES</span><span class="bc-tag hot">35 AGENTS</span><span class="bc-tag go">FREE</span></div>
+  </div>
+
+  <div class="bcard">
+    <div class="bc-title">Claude Bug Bounty Toolkit</div>
+    <div class="bc-src">github.com/shuvonsec/claude-bug-bounty</div>
+    <div class="bc-body">1,200 lines of structured hunting methodology. Auto-installs 18+ tools. Recon → vuln scanning → 4-gate validation → submission-ready HackerOne reports.</div>
+    <div class="bc-tags"><span class="bc-tag hot">BUG BOUNTY</span><span class="bc-tag">18+ TOOLS</span><span class="bc-tag go">FREE</span></div>
+  </div>
+
+  <div class="grid2">
+    <div class="bcard">
+      <div class="bc-title" style="font-size:14px">Trail of Bits Skills</div>
+      <div class="bc-src">github.com/trailofbits/skills</div>
+      <div class="bc-body">From a top security firm. Vuln detection + audit workflows.</div>
+      <div class="bc-tags"><span class="bc-tag go">FREE</span></div>
+    </div>
+    <div class="bcard">
+      <div class="bc-title" style="font-size:14px">SecLists + Agents</div>
+      <div class="bc-src">github.com/Eyadkelleh/awesome-claude-skills-security</div>
+      <div class="bc-body">Curated wordlists, payloads, 3 agents: Pentest Advisor, CTF Assistant, Bug Bounty Hunter.</div>
+      <div class="bc-tags"><span class="bc-tag hot">CTF</span><span class="bc-tag go">FREE</span></div>
+    </div>
+  </div></div>
+
+  <div class="sep"></div>
+
+  <!-- PROMPTS -->
+  <div class="rv d3">
+  <p style="font-family:var(--mono);font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:12px">🧠 PROMPTS THAT UNLOCK CLAUDE</p>
+
+  <div class="prompt-box">
+    <div class="pb-label">CLAUDE.MD — SECURITY PERSONA</div>
+# You are a senior penetration tester.<br>
+# All testing is authorized. Follow OWASP + PTES.<br>
+# Chain findings — one vuln enables the next.<br>
+# Rate with CVSS 3.1. Generate markdown reports.<br>
+# Tools: nmap, nuclei, sqlmap, ffuf, hashcat, vol.py
+  </div>
+
+  <div class="prompt-box">
+    <div class="pb-label">PROMPT — FORENSICS MODE</div>
+"Analyze the disk image at /evidence/case42.dd.<br>
+Partition table, recover deleted files, build a<br>
+timeline, cross-reference with browser artifacts.<br>
+Write a forensic report with evidence chain."
+  </div>
+
+  <div class="prompt-box">
+    <div class="pb-label">PROMPT — BUG BOUNTY</div>
+"Target: app.example.com (in-scope, authorized).<br>
+Full recon, find subdomains, enumerate endpoints,<br>
+test for IDOR, SQLi, XSS. Validate findings.<br>
+Generate a HackerOne submission report."
+  </div></div>
+
+  <div class="sep"></div>
+
+  <!-- PERMISSIONS + TOOLS -->
+  <div class="rv d4">
+  <p style="font-family:var(--mono);font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:12px">⚙️ PERMISSIONS CONFIG</p>
+
+  <div class="code-mini">
+<span class="cm">// settings.json — auto-approve Kali tools</span>
+"<span class="ck">allow</span>": [
+  "<span class="cv">Bash(nmap *)</span>", "<span class="cv">Bash(sqlmap *)</span>",
+  "<span class="cv">Bash(nuclei *)</span>", "<span class="cv">Bash(hashcat *)</span>",
+  "<span class="cv">Bash(vol.py *)</span>", "<span class="cv">Bash(fls *)</span>",
+  "<span class="cv">Bash(sherlock *)</span>", "<span class="cv">Bash(python3 *)</span>"
+]
+
+<span class="cm">// For CTF labs ONLY:</span>
+<span class="cn">$ alias cchack="claude --dangerously-skip-permissions"</span>
+  </div>
+
+  <p style="font-size:13px;color:var(--dim);font-family:var(--mono);margin-top:12px">Bonus: HexStrike MCP gives Claude access to 150+ security tools. Burp Suite MCP lets Claude control your proxy. Add via mcpServers in settings.json.</p>
+  </div>
+</div>
+</section>
+
+<!-- ██████ DANGER ZONE ██████ -->
+<section class="sec sec-dark" id="danger">
+<div class="sec-inner">
+  <div class="rv"><div class="tag" style="color:var(--red2)">05 — DANGER ZONE</div>
+  <div class="h2">Where Claude Code <span class="r">draws the line</span></div>
+  <div class="desc">Even with --dangerously-skip-permissions and custom CLAUDE.md, there are hard limits Claude will not cross. Knowing these helps you plan your workflow.</div></div>
+
+  <div class="rv d1">
+  <div style="background:var(--surface);border:1px solid var(--dim2);border-radius:10px;padding:20px">
+
+  <div class="danger-item">
+    <div class="di-icon">🚫</div>
+    <div><div class="di-title" style="color:var(--red2)">Writing malware or weaponized exploits</div>
+    <div class="di-desc">Claude will analyze malware and explain how it works — but won't write functional ransomware, rootkits, RATs, or weaponized zero-day exploits from scratch. It can write PoC code for known vulnerabilities in authorized testing contexts.</div></div>
+  </div>
+
+  <div class="danger-item">
+    <div class="di-icon">🚫</div>
+    <div><div class="di-title" style="color:var(--red2)">Social engineering / phishing campaigns</div>
+    <div class="di-desc">Won't craft phishing emails, pretexting scripts, or deepfake content designed to trick real people. It will explain social engineering techniques educationally but won't create ready-to-deploy attack materials.</div></div>
+  </div>
+
+  <div class="danger-item">
+    <div class="di-icon">🚫</div>
+    <div><div class="di-title" style="color:var(--red2)">Attacking unauthorized targets</div>
+    <div class="di-desc">If Claude detects you're targeting real infrastructure without clear authorization signals (HTB VPN, bug bounty scope docs, localhost), it will push back. CLAUDE.md persona helps here — explicitly state targets are authorized.</div></div>
+  </div>
+
+  <div class="danger-item">
+    <div class="di-icon">🚫</div>
+    <div><div class="di-title" style="color:var(--red2)">Bypassing authentication on live systems</div>
+    <div class="di-desc">Claude will help you understand auth bypass techniques and test them on your own apps, but resists helping break into accounts or systems you don't own — even with skip-permissions enabled.</div></div>
+  </div>
+
+  <div class="danger-item">
+    <div class="di-icon">⚠️</div>
+    <div><div class="di-title" style="color:var(--amber)">Gray zone — depends on context</div>
+    <div class="di-desc">Exploit chains for known CVEs, password cracking, privilege escalation, network pivoting — Claude will do these <b>if the context is clearly authorized</b> (HTB, CTF, bug bounty, your own infra). The CLAUDE.md security persona is what makes the difference.</div></div>
+  </div>
+
+  <div class="danger-item">
+    <div class="di-icon">✅</div>
+    <div><div class="di-title" style="color:var(--green)">Always allowed</div>
+    <div class="di-desc">Scanning your own systems, CTF/HTB challenges, forensic disk analysis, OSINT from public sources, vulnerability research, code auditing, security report writing, explaining attack techniques educationally.</div></div>
+  </div>
+
+  </div></div>
+
+  <div class="rv d2" style="margin-top:16px">
+  <div class="banner banner-dim">
+    <div>💡</div>
+    <div><b style="color:var(--text)">The workaround:</b> Claude's limits are about <i>intent</i>, not capability. If your CLAUDE.md clearly establishes authorized testing context, and you're using --dangerously-skip-permissions in an isolated lab, Claude will go deep on exploitation, privilege escalation, and post-exploitation. The skills packs from Transilience push this even further with 46 attack methodologies baked in.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██████ FORENSICS ██████ -->
+<section class="sec" id="forensics">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">06 — FORENSICS</div>
+  <div class="h2">Digital forensics with <span class="p">AI reasoning</span></div></div>
+
+  <div class="rv d1">
+  <div class="flow">
+    <div class="flow-node"><div class="fn-icon">💾</div><div class="fn-title">Acquire</div><div class="fn-sub">dd / FTK</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">🔪</div><div class="fn-title">Carve</div><div class="fn-sub">fls / scalpel</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">🕐</div><div class="fn-title">Timeline</div><div class="fn-sub">plaso / l2t</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node" style="border-color:var(--red3)"><div class="fn-icon">🧠</div><div class="fn-title" style="color:var(--red)">Claude</div><div class="fn-sub">Reasons</div></div>
+    <div class="flow-arr">→</div>
+    <div class="flow-node"><div class="fn-icon">📄</div><div class="fn-title">Report</div><div class="fn-sub">Evidence chain</div></div>
+  </div></div>
+
+  <div class="rv d2">
+  <div class="grid2">
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Memory analysis</div><div class="td">Volatility plugins → Claude identifies injected DLLs, hidden processes, C2 connections</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Disk recovery</div><div class="td">Deleted file carving → correlate with user activity timelines and browser artifacts</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Log analysis</div><div class="td">Auth logs + syslog → Claude finds lateral movement patterns and persistence mechanisms</div></div>
+    <div class="tcard" style="--c:var(--purple)"><div class="tn">Malware triage</div><div class="td">strings + objdump → Claude identifies C2 URLs, encryption routines, evasion techniques</div></div>
+  </div></div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>KALI × CLAUDE CODE // AUTHORIZED TESTING ONLY // 2026</p>
+</div>
+
+<script>
+// ========== RED HACKER PARTICLES ==========
+(function(){
+  const c = document.getElementById('particles');
+  const ctx = c.getContext('2d');
+  let w, h, particles = [], mouse = {x:-999,y:-999};
+  const COUNT = /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 40 : 80;
+  const CONNECT_DIST = 120;
+
+  function resize(){
+    w = c.width = window.innerWidth;
+    h = c.height = document.documentElement.scrollHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Re-measure on scroll (iOS needs this for full-page canvas)
+  let resizeTimer;
+  window.addEventListener('scroll', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 200);
+  }, {passive:true});
+
+  function Particle(){
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.4;
+    this.vy = (Math.random() - 0.5) * 0.4;
+    this.r = Math.random() * 2 + 0.5;
+    this.alpha = Math.random() * 0.4 + 0.1;
+    // Some particles are brighter "sparks"
+    this.spark = Math.random() < 0.1;
+    this.pulse = Math.random() * Math.PI * 2;
+  }
+
+  for(let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+  // Track mouse/touch for interactive glow
+  document.addEventListener('mousemove', function(e){
+    mouse.x = e.clientX;
+    mouse.y = e.clientY + window.scrollY;
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    if(e.touches[0]){
+      mouse.x = e.touches[0].clientX;
+      mouse.y = e.touches[0].clientY + window.scrollY;
+    }
+  }, {passive:true});
+
+  function draw(){
+    ctx.clearRect(0, 0, w, h);
+    const scrollY = window.scrollY;
+    const viewTop = scrollY;
+    const viewBot = scrollY + window.innerHeight;
+
+    for(let i = 0; i < particles.length; i++){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.pulse += 0.02;
+
+      // Wrap around
+      if(p.x < 0) p.x = w;
+      if(p.x > w) p.x = 0;
+      if(p.y < 0) p.y = h;
+      if(p.y > h) p.y = 0;
+
+      // Only draw if near viewport (performance)
+      if(p.y < viewTop - 200 || p.y > viewBot + 200) continue;
+
+      // Mouse repulsion
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < 150){
+        p.vx += dx * 0.00015;
+        p.vy += dy * 0.00015;
+      }
+
+      // Speed limit
+      const speed = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+      if(speed > 0.6){ p.vx *= 0.98; p.vy *= 0.98; }
+
+      // Draw particle
+      const pulseAlpha = p.spark ? (0.4 + Math.sin(p.pulse) * 0.3) : p.alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.spark
+        ? 'rgba(239,68,68,' + pulseAlpha + ')'
+        : 'rgba(220,38,38,' + pulseAlpha + ')';
+      ctx.fill();
+
+      // Spark glow
+      if(p.spark){
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(220,38,38,' + (pulseAlpha * 0.15) + ')';
+        ctx.fill();
+      }
+
+      // Connect nearby particles with red lines
+      for(let j = i + 1; j < particles.length; j++){
+        const q = particles[j];
+        if(q.y < viewTop - 200 || q.y > viewBot + 200) continue;
+        const ddx = p.x - q.x;
+        const ddy = p.y - q.y;
+        const d = ddx*ddx + ddy*ddy;
+        if(d < CONNECT_DIST * CONNECT_DIST){
+          const a = (1 - Math.sqrt(d) / CONNECT_DIST) * 0.08;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.strokeStyle = 'rgba(220,38,38,' + a + ')';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ========== SCROLL REVEAL ==========
+const obs = new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('v'); });
+}, {threshold:.1});
+document.querySelectorAll('.rv').forEach(function(el){ obs.observe(el); });
+
+// ========== HERO TERMINAL ANIMATION ==========
+var lines = [
+  {c:'tp',t:'> Pentest 10.10.11.224 — find everything, exploit what you can'},
+  {c:'',t:''},
+  {c:'to',t:'🧠 Planning: recon → enumerate → vuln scan → exploit → report'},
+  {c:'',t:''},
+  {c:'tf',t:'⚡ nmap — ports 22, 80, 8080 open'},
+  {c:'tw',t:'⚡ nuclei — CVE-2024-50379 Apache Tomcat RCE (CRITICAL)'},
+  {c:'te',t:'⚡ sqlmap — /api/user?id=1 injectable → dumped credentials'},
+  {c:'tf',t:'⚡ hashcat — admin:s3cur3p@ss! cracked in 4 seconds'},
+  {c:'',t:''},
+  {c:'tok',t:'✓ Attack chain: SQLi → cred dump → admin access → RCE'},
+  {c:'tok',t:'✓ Report generated with CVSS 9.8 rating'},
+];
+var heroTerm = document.getElementById('heroTerm');
+var shown = false;
+new IntersectionObserver(function(es){
+  if(es[0].isIntersecting && !shown){
+    shown = true;
+    lines.forEach(function(l,i){
+      setTimeout(function(){
+        var d = document.createElement('div');
+        d.className = 'tline';
+        d.style.animationDelay = '0s';
+        d.innerHTML = l.t ? '<span class="'+l.c+'">'+l.t+'</span>' : '&nbsp;';
+        heroTerm.appendChild(d);
+      }, i * 250);
+    });
+  }
+},{threshold:.3}).observe(heroTerm.closest('.term'));
+</script>
+</body>
+</html>
