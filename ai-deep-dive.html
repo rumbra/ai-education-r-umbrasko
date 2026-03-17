@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<script>document.documentElement.classList.replace('no-js','js');</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEEP DIVE // How AI Coding Actually Works</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@200;300;400;600;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--bg2:#0d0d14;--bg3:#12121c;
+  --green:#00ff88;--green2:#00cc6a;--green3:#004d28;
+  --cyan:#00e5ff;--amber:#ffb800;--red:#ff3366;--purple:#a855f7;
+  --text:#e0e0e8;--muted:#6b6b80;
+  --mono:'JetBrains Mono','SF Mono','Menlo',monospace;--sans:'Outfit','SF Pro Display',-apple-system,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;cursor:default}
+
+/* SCANLINES + CRT */
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);
+  pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 100%);
+  pointer-events:none;z-index:9998}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--green3);border-radius:2px}
+
+/* GLOBAL ANIMS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(60px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-2px,2px)}40%{transform:translate(2px,-2px)}60%{transform:translate(-1px,-1px)}80%{transform:translate(1px,2px)}100%{transform:translate(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes scan{0%{top:-100%}100%{top:100%}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes slideR{from{transform:translateX(-100px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes typeChar{from{width:0}to{width:100%}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes dataStream{0%{background-position:0 0}100%{background-position:0 200px}}
+@keyframes neuronFire{0%{box-shadow:0 0 0 0 rgba(0,255,136,.6)}70%{box-shadow:0 0 0 15px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
+@keyframes weightFlow{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes matrixRain{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+@keyframes expandBar{from{width:0}to{width:var(--w)}}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* HERO */
+.hero{height:100vh;height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;overflow:hidden}
+.matrix-col{position:absolute;top:-100%;font-family:var(--mono);font-size:14px;color:var(--green);opacity:.07;
+  writing-mode:vertical-rl;line-height:20px;animation:matrixRain linear infinite;white-space:nowrap}
+.hero-badge{font-family:var(--mono);font-size:11px;color:var(--green);letter-spacing:4px;text-transform:uppercase;
+  border:1px solid var(--green3);padding:6px 16px;border-radius:2px;margin-bottom:32px}
+.js .hero-badge{opacity:0;animation:fadeIn 1s .5s forwards}
+.hero h1{font-size:clamp(40px,8vw,90px);font-weight:900;line-height:.95;letter-spacing:-3px;text-align:center}
+.js .hero h1{opacity:0;animation:fadeUp 1.2s .8s forwards}
+.hero h1 .green{color:var(--green)}
+.hero h1 .dim{color:var(--muted);font-weight:300}
+.hero-sub{font-size:clamp(14px,2vw,18px);color:var(--muted);margin-top:20px;font-weight:300;text-align:center;max-width:600px}
+.js .hero-sub{opacity:0;animation:fadeIn 1s 1.5s forwards}
+.scroll-hint{position:absolute;bottom:40px;font-family:var(--mono);font-size:11px;color:var(--green);letter-spacing:2px;cursor:pointer}
+.js .scroll-hint{opacity:0;animation:fadeIn 1s 2.5s forwards,float 2s 3s ease-in-out infinite}
+
+/* SECTIONS */
+.section{min-height:100vh;padding:80px 24px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.section-inner{max-width:900px;width:100%}
+
+/* SECTION HEADERS */
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--green);letter-spacing:6px;text-transform:uppercase;margin-bottom:12px}
+.sec-title{font-size:clamp(28px,5vw,48px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px}
+.sec-title .accent{color:var(--green)}
+.sec-desc{font-size:16px;color:var(--muted);line-height:1.7;max-width:600px;margin-bottom:40px;font-weight:300}
+
+/* REVEAL — only hide when JS is confirmed running */
+.js .reveal{opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.js .reveal.visible{opacity:1;transform:translateY(0)}
+.no-js .reveal{opacity:1;transform:none}
+.reveal-delay-1{transition-delay:.15s}
+.reveal-delay-2{transition-delay:.3s}
+.reveal-delay-3{transition-delay:.45s}
+.reveal-delay-4{transition-delay:.6s}
+
+/* TERMINAL WINDOW */
+.terminal{background:#0c0c14;border:1px solid #1a1a2e;border-radius:8px;overflow:hidden;margin:20px 0;position:relative}
+.terminal::after{content:'';position:absolute;top:0;left:0;right:0;height:200%;
+  background:linear-gradient(transparent 48%,rgba(0,255,136,.02) 50%,transparent 52%);
+  animation:scan 4s linear infinite;pointer-events:none}
+.term-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:#08080e;border-bottom:1px solid #1a1a2e}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-dot.r{background:#ff5f57}.term-dot.y{background:#febc2e}.term-dot.g{background:#28c840}
+.term-title{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px}
+.term-body{padding:16px 18px;font-family:var(--mono);font-size:13px;line-height:1.8}
+.js .term-line{opacity:0;animation:slideR .4s ease forwards}
+.no-js .term-line{opacity:1}
+.t-prompt{color:var(--green)}
+.t-cmd{color:var(--text)}
+.t-out{color:var(--muted)}
+.t-file{color:var(--cyan)}
+.t-warn{color:var(--amber)}
+.t-err{color:var(--red)}
+.t-ok{color:var(--green)}
+.t-tool{color:var(--amber)}
+.cursor{display:inline-block;width:8px;height:16px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle}
+
+/* NEURAL NET CANVAS */
+.nn-container{position:relative;width:100%;height:420px;margin:24px 0;overflow:hidden;
+  border:1px solid #1a1a2e;border-radius:8px;background:#08080e}
+.nn-canvas{width:100%;height:100%}
+
+/* WEIGHT VIS */
+.weight-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;margin:20px 0;padding:16px;
+  background:#08080e;border:1px solid #1a1a2e;border-radius:8px}
+.weight-cell{aspect-ratio:1;border-radius:2px;transition:all .3s}
+
+/* INFO CARDS */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:20px 0}
+.info-card{background:var(--bg2);border:1px solid #1a1a2e;border-radius:8px;padding:20px;transition:all .3s;cursor:default}
+.info-card:hover{border-color:var(--green3);transform:translateY(-2px)}
+.info-card .ic-icon{font-size:24px;margin-bottom:12px}
+.info-card .ic-title{font-size:15px;font-weight:600;margin-bottom:6px}
+.info-card .ic-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* CODE BLOCKS */
+.code-block{background:#08080e;border:1px solid #1a1a2e;border-radius:8px;padding:16px 18px;margin:16px 0;
+  font-family:var(--mono);font-size:12px;line-height:1.8;overflow-x:auto;position:relative}
+.code-block .lang{position:absolute;top:8px;right:12px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.c-key{color:var(--purple)}.c-str{color:var(--green)}.c-com{color:#4a4a5a;font-style:italic}
+.c-num{color:var(--amber)}.c-fn{color:var(--cyan)}.c-op{color:var(--red)}
+
+/* FLOW DIAGRAM */
+.flow{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.flow-step{display:flex;align-items:stretch;gap:16px}
+.flow-line{width:2px;background:linear-gradient(var(--green3),var(--green));flex-shrink:0;margin-left:15px;position:relative}
+.flow-line::before{content:'';position:absolute;top:0;left:-6px;width:14px;height:14px;
+  border-radius:50%;background:var(--green);border:3px solid var(--bg)}
+.flow-card{flex:1;background:var(--bg2);border:1px solid #1a1a2e;border-radius:8px;padding:16px 20px;margin:8px 0}
+.flow-card .fc-title{font-weight:600;font-size:14px;margin-bottom:4px}
+.flow-card .fc-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.flow-step:last-child .flow-line{background:linear-gradient(var(--green),transparent)}
+
+/* BARS */
+.bar-chart{margin:20px 0}
+.bar-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+.bar-label{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:90px;text-align:right}
+.bar-track{flex:1;height:24px;background:#0c0c14;border-radius:4px;overflow:hidden;border:1px solid #1a1a2e}
+.bar-fill{height:100%;border-radius:3px;width:var(--w)}
+.js .bar-fill{animation:expandBar 1.5s ease forwards;width:0}
+.bar-val{font-family:var(--mono);font-size:11px;color:var(--text);min-width:50px}
+
+/* CONFIG PANELS */
+.config-panel{background:var(--bg2);border:1px solid #1a1a2e;border-radius:8px;overflow:hidden;margin:16px 0}
+.config-header{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#08080e;border-bottom:1px solid #1a1a2e;
+  font-family:var(--mono);font-size:12px;color:var(--green)}
+.config-body{padding:16px 18px;font-family:var(--mono);font-size:12px;line-height:2}
+
+/* INTERACTIVE PLAYGROUND */
+.playground{background:#08080e;border:1px solid #1a1a2e;border-radius:8px;padding:20px;margin:20px 0}
+.playground-input{width:100%;background:#0c0c14;border:1px solid #1a1a2e;border-radius:6px;padding:12px 16px;
+  color:var(--text);font-family:var(--mono);font-size:14px;outline:none;resize:none;transition:border-color .3s}
+.playground-input:focus{border-color:var(--green3)}
+.playground-input::placeholder{color:var(--muted)}
+.playground-output{margin-top:12px;min-height:50px}
+.token-chip{display:inline-block;padding:4px 10px;margin:3px;border-radius:4px;font-family:var(--mono);font-size:12px;
+  border:1px solid;cursor:default;transition:all .2s;position:relative}
+.token-chip:hover{transform:scale(1.05)}
+.token-chip .token-id{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;
+  color:var(--muted);opacity:0;transition:opacity .2s;white-space:nowrap}
+.token-chip:hover .token-id{opacity:1}
+
+/* TEMPERATURE DEMO */
+.temp-control{display:flex;align-items:center;gap:16px;margin:16px 0;flex-wrap:wrap}
+.temp-slider{-webkit-appearance:none;appearance:none;width:200px;height:4px;background:#1a1a2e;border-radius:2px;outline:none}
+.temp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--green);cursor:pointer}
+.temp-value{font-family:var(--mono);font-size:14px;color:var(--green);min-width:32px}
+.prob-bar-container{margin:12px 0}
+.prob-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-family:var(--mono);font-size:12px}
+.prob-token{min-width:70px;text-align:right;color:var(--text)}
+.prob-track{flex:1;height:20px;background:#0c0c14;border-radius:3px;overflow:hidden;position:relative}
+.prob-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.prob-pct{min-width:45px;color:var(--muted);text-align:right}
+.prob-row.selected .prob-token{color:var(--green);font-weight:700}
+.prob-row.selected .prob-pct{color:var(--green)}
+
+/* TOOL CALL INTERACTIVE */
+.tool-demo{position:relative;margin:20px 0}
+.tool-step{background:var(--bg2);border:1px solid #1a1a2e;border-radius:8px;padding:16px 20px;margin:8px 0;
+  cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.tool-step:hover{border-color:var(--green3)}
+.tool-step.active{border-color:var(--green);background:#0a1a12}
+.tool-step .step-num{font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:6px}
+.tool-step .step-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.tool-step .step-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.tool-step .step-detail{max-height:0;overflow:hidden;transition:max-height .5s ease,margin .3s;margin-top:0}
+.tool-step.active .step-detail{max-height:300px;margin-top:12px}
+.tool-connector{width:2px;height:16px;background:var(--green3);margin-left:24px}
+
+/* CONTEXT WINDOW VIS */
+.context-window{position:relative;width:100%;height:40px;background:#0c0c14;border:1px solid #1a1a2e;border-radius:6px;
+  overflow:hidden;margin:12px 0}
+.context-segment{height:100%;display:inline-block;transition:width .5s ease;position:relative;cursor:default}
+.context-segment:hover::after{content:attr(data-label);position:absolute;top:-28px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;color:var(--text);background:var(--bg2);padding:2px 8px;border-radius:3px;
+  border:1px solid #1a1a2e;white-space:nowrap;z-index:10}
+.context-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.context-legend-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.context-legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* ATTENTION HEATMAP */
+.attn-grid{display:grid;gap:2px;margin:16px 0;padding:12px;background:#08080e;border:1px solid #1a1a2e;border-radius:8px}
+.attn-cell{aspect-ratio:1;border-radius:2px;cursor:default;transition:all .2s;position:relative;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:transparent}
+.attn-cell:hover{color:var(--text);z-index:2;transform:scale(1.4)}
+.attn-label{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;padding:4px}
+
+/* FOOTER */
+.footer{padding:60px 24px;text-align:center;border-top:1px solid #1a1a2e}
+.footer-text{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:2px}
+
+/* MOBILE */
+@media(max-width:600px){
+  .info-grid{grid-template-columns:1fr}
+  .hero h1{letter-spacing:-1px}
+  .weight-grid{grid-template-columns:repeat(10,1fr)}
+  .section{padding:40px 16px}
+  .temp-control{flex-direction:column;align-items:flex-start}
+}
+
+/* NO-JS FALLBACKS */
+.no-js .nn-container{display:flex;align-items:center;justify-content:center}
+.no-js .nn-container::before{content:'[ Neural network visualization — requires JavaScript ]';
+  font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center}
+.no-js canvas{display:none}
+.no-js .playground{border-color:#1a1a2e}
+.no-js .playground-input{display:none}
+.no-js #tokenOutput::before{content:'[ Interactive tokenizer — requires JavaScript ]';color:var(--muted);font-family:var(--mono);font-size:12px}
+.no-js #probBars::before{content:'[ Temperature demo — requires JavaScript ]';color:var(--muted);font-family:var(--mono);font-size:12px}
+.no-js .temp-control{display:none}
+.no-js #attnDemo::before{content:'[ Attention heatmap — requires JavaScript ]';color:var(--muted);font-family:var(--mono);font-size:12px;display:block;padding:20px;text-align:center}
+.no-js #attnSelect{display:none}
+.no-js #finetuneDemo::before{content:'$ python train.py\nLoading model... LoRA config applied.\nEpoch 1/3 — loss: 1.842\nEpoch 2/3 — loss: 0.956\nEpoch 3/3 — loss: 0.412\nTraining complete. Adapter saved.';
+  white-space:pre;color:var(--green);font-family:var(--mono);font-size:12px}
+.no-js .ft-tab{pointer-events:none}
+.no-js #costEstimate::before{content:'[ Cost calculator — requires JavaScript ]';color:var(--muted);font-family:var(--mono);font-size:12px}
+.no-js .tool-step .step-detail{max-height:500px;margin-top:12px}
+.no-js .weight-grid{display:none}
+.no-js #weightGrid::before{content:'';display:none}
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero" id="top">
+  <div class="hero-bg" id="matrixBg"></div>
+  <div class="hero-badge">CLASSIFIED // DEEP DIVE</div>
+  <h1>HOW <span class="green">AI CODING</span><br><span class="dim">ACTUALLY</span> WORKS</h1>
+  <p class="hero-sub">From neural weights to autonomous coding agents. The full picture of how LLMs understand, generate, and write code. No BS.</p>
+  <div class="scroll-hint" onclick="document.getElementById('s1').scrollIntoView()">[ SCROLL TO BEGIN ] &darr;</div>
+</section>
+
+<!-- ==================== CHAPTER 1: THE BRAIN ==================== -->
+<section class="section" id="s1">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 01 // THE BRAIN</div>
+      <div class="sec-title">What's inside <span class="accent">an LLM?</span></div>
+      <p class="sec-desc">An LLM is not code. It's not if-else logic. It's billions of numbers &mdash; weights &mdash; arranged in layers, learned by processing trillions of words and code. Here's what it actually looks like.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <div class="nn-container">
+        <canvas class="nn-canvas" id="nnCanvas"></canvas>
+      </div>
+      <p style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-top:4px">click the canvas to fire a signal through the network</p>
+    </div>
+
+    <div class="reveal reveal-delay-2">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:8px;letter-spacing:2px">&#9656; WHAT WEIGHTS LOOK LIKE IN MEMORY</p>
+      <div class="weight-grid" id="weightGrid">
+        <noscript><div style="grid-column:1/-1;text-align:center;padding:16px;font-family:var(--mono);font-size:12px;color:var(--muted)">[ Weight visualization &mdash; requires JavaScript ]</div></noscript>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6">Each cell = one weight (a number like 0.00142 or -0.8371). Modern LLMs have <b style="color:var(--text)">hundreds of billions</b> of these. Together, they encode everything the model knows &mdash; language, code, reasoning, math.</p>
+    </div>
+
+    <div class="reveal reveal-delay-3">
+      <div class="info-grid" style="margin-top:32px">
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--cyan)">Embeddings</div>
+          <div class="ic-desc">Every word &rarr; list of ~4096 numbers. "King" and "Queen" are close in this space. "Cat" and "Democracy" are far. This is how the model sees language &mdash; as points in hyperspace.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--amber)">Attention</div>
+          <div class="ic-desc">For each word, the model asks: "Which other words matter here?" Weights determine connection strength. In "The cat sat on the mat" &mdash; "sat" attends strongly to "cat" and weakly to "the".</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--green)">Layers (x96+)</div>
+          <div class="ic-desc">Input passes through 96+ transformer layers. Each refines understanding. Early layers learn grammar. Middle layers learn concepts. Final layers learn reasoning + generation.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-4" style="margin-top:32px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:8px;letter-spacing:2px">&#9656; PARAMETER SCALE</p>
+      <div class="bar-chart">
+        <div class="bar-row"><span class="bar-label">GPT-2</span><div class="bar-track"><div class="bar-fill" style="--w:5%;background:var(--muted)"></div></div><span class="bar-val">1.5B</span></div>
+        <div class="bar-row"><span class="bar-label">LLaMA 3</span><div class="bar-track"><div class="bar-fill" style="--w:15%;background:var(--cyan)"></div></div><span class="bar-val">70B</span></div>
+        <div class="bar-row"><span class="bar-label">LLaMA 3.1</span><div class="bar-track"><div class="bar-fill" style="--w:28%;background:var(--cyan)"></div></div><span class="bar-val">405B</span></div>
+        <div class="bar-row"><span class="bar-label">GPT-4</span><div class="bar-track"><div class="bar-fill" style="--w:55%;background:var(--purple)"></div></div><span class="bar-val">~1.7T*</span></div>
+        <div class="bar-row"><span class="bar-label">Claude Opus</span><div class="bar-track"><div class="bar-fill" style="--w:70%;background:var(--green)"></div></div><span class="bar-val">???</span></div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);font-style:italic;margin-top:4px">*estimated / rumored. Most companies don't disclose parameter counts. More params &ne; always better &mdash; architecture and training data matter hugely.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 2: TOKEN FLOW ==================== -->
+<section class="section" id="s2" style="background:var(--bg2)">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 02 // TOKEN FLOW</div>
+      <div class="sec-title">How text becomes <span class="accent">prediction</span></div>
+      <p class="sec-desc">When you type "fix my auth bug", here's literally what happens inside the model.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; TRY IT &mdash; TYPE ANYTHING TO SEE TOKENS</p>
+      <div class="playground">
+        <textarea class="playground-input" id="tokenInput" rows="2" placeholder="Type anything... e.g. &quot;function calculateTotal(items) { return items.reduce((sum, i) => sum + i.price, 0); }&quot;" spellcheck="false"></textarea>
+        <div class="playground-output" id="tokenOutput">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">tokens will appear here...</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <span id="tokenCount" style="font-family:var(--mono);font-size:11px;color:var(--muted)"></span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">simplified BPE tokenizer</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-2">
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--cyan)">1. Tokenize</div>
+            <div class="fc-desc">"fix my auth bug" &rarr; <code style="color:var(--green);background:#08080e;padding:2px 6px;border-radius:3px">[fix] [my] [auth] [bug]</code><br>
+            Each token becomes an ID number. "fix" might be token #8821. The model only sees numbers.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--amber)">2. Embed</div>
+            <div class="fc-desc">Token #8821 &rarr; [0.032, -0.891, 0.445, ... 4096 numbers]<br>
+            This vector captures the meaning of "fix" in a 4096-dimensional space. Like GPS coordinates but for meaning.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--purple)">3. Attend (x96 layers)</div>
+            <div class="fc-desc">Each token looks at every other token. "bug" attends to "auth" heavily (they're related). Attention weights determine how much each word influences every other word. This repeats across 96+ layers, each refining understanding.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--green)">4. Predict next token</div>
+            <div class="fc-desc">After 96 layers, the final vector is compared against the entire vocabulary (~100K tokens). Each gets a probability: "I" &rarr; 12%, "Let" &rarr; 8%, "The" &rarr; 3%... The model picks one (based on temperature) and repeats.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--red)">5. Loop until done</div>
+            <div class="fc-desc">Predicted token feeds back as input. The model generates one token at a time, left to right, until it produces a stop token. Every response you've ever seen from an AI was built this way &mdash; one word at a time.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-3" style="margin-top:16px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; INTERACTIVE &mdash; HOW TEMPERATURE CHANGES OUTPUT</p>
+      <div class="playground">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">After the model scores every token, <b style="color:var(--text)">temperature</b> controls randomness. Low = deterministic. High = creative/chaotic.</p>
+        <div style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:12px">
+          Context: <span style="color:var(--text)">"The function should"</span> &rarr; next token:
+        </div>
+        <div class="temp-control">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">temperature:</span>
+          <input type="range" class="temp-slider" id="tempSlider" min="0" max="200" value="70">
+          <span class="temp-value" id="tempValue">0.7</span>
+        </div>
+        <div class="prob-bar-container" id="probBars"></div>
+        <p id="tempExplain" style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;font-style:italic"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 3: ATTENTION VISUALIZED ==================== -->
+<section class="section" id="s3">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 03 // ATTENTION</div>
+      <div class="sec-title">How the model <span class="accent">sees connections</span></div>
+      <p class="sec-desc">Attention is THE core mechanism. For each token, the model computes how much it should "pay attention" to every other token. Here's a simplified view.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:8px;letter-spacing:2px">&#9656; ATTENTION HEATMAP &mdash; HOVER TO SEE SCORES</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">Each cell shows how much the row token attends to the column token. Brighter = stronger connection.</p>
+      <div id="attnDemo"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">sentence:</span>
+        <select id="attnSelect" style="background:#0c0c14;border:1px solid #1a1a2e;border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;cursor:pointer">
+          <option value="0">The cat sat on the mat</option>
+          <option value="1">function getUser(id) { return db.find(id) }</option>
+          <option value="2">import React from 'react'</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-2" style="margin-top:32px">
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--cyan)">Self-Attention</div>
+          <div class="ic-desc">Each token generates three vectors: Query (what am I looking for?), Key (what do I contain?), Value (what do I offer?). The dot product of Q&middot;K determines attention weights.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--amber)">Multi-Head</div>
+          <div class="ic-desc">Instead of one attention pattern, the model runs 32-128 attention "heads" in parallel. Each head learns to focus on different things &mdash; one might track syntax, another tracks variable references, another tracks logic flow.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--green)">Causal Masking</div>
+          <div class="ic-desc">During generation, each token can only attend to tokens BEFORE it (not future tokens). This is why the heatmap is triangular &mdash; the model can't cheat by looking ahead.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 4: OPEN WEIGHTS ==================== -->
+<section class="section" id="s4" style="background:var(--bg2)">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 04 // OPEN WEIGHTS</div>
+      <div class="sec-title">Using & modifying <span class="accent">models yourself</span></div>
+      <p class="sec-desc">Some models release their weights publicly. You can download them, run them locally, fine-tune them, even merge them. Here's how.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <div class="terminal">
+        <div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">downloading open-source model weights</span></div>
+        <div class="term-body">
+          <div class="term-line" style="animation-delay:.2s"><span class="t-com"># Install Ollama &mdash; runs open models locally</span></div>
+          <div class="term-line" style="animation-delay:.4s"><span class="t-prompt">$</span> <span class="t-cmd">curl -fsSL https://ollama.com/install.sh | sh</span></div>
+          <div class="term-line" style="animation-delay:.7s"><span class="t-com"># Download LLaMA 3.1 &mdash; 70B parameters, 40GB file</span></div>
+          <div class="term-line" style="animation-delay:.9s"><span class="t-prompt">$</span> <span class="t-cmd">ollama pull llama3.1:70b</span></div>
+          <div class="term-line" style="animation-delay:1.1s"><span class="t-out">pulling manifest... done</span></div>
+          <div class="term-line" style="animation-delay:1.3s"><span class="t-out">pulling 4e9568fb1e7d... 100% ████████████ 40.1 GB</span></div>
+          <div class="term-line" style="animation-delay:1.6s"><span class="t-com"># That's it. The "weights" are in that 40GB file.</span></div>
+          <div class="term-line" style="animation-delay:1.9s"><span class="t-com"># It's literally billions of floating-point numbers.</span></div>
+          <div class="term-line" style="animation-delay:2.2s"><span class="t-prompt">$</span> <span class="t-cmd">ollama run llama3.1:70b</span></div>
+          <div class="term-line" style="animation-delay:2.5s"><span class="t-ok">>>> Model loaded. You're running AI locally.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-2">
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--green)">Fine-tuning</div>
+          <div class="ic-desc">Take existing weights, train on YOUR data (code repos, domain docs, custom formats). The model adapts its weights to your domain. Tools: Unsloth, Axolotl, HuggingFace TRL.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--amber)">LoRA / QLoRA</div>
+          <div class="ic-desc">Don't retrain all 70B params &mdash; freeze most, add small adapter layers (only ~0.1% of weights). Train THOSE. You get a tiny file (50-200MB) that modifies the base model's behavior. Fast and cheap.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--cyan)">Quantization</div>
+          <div class="ic-desc">Original weights = 16-bit floats. Quantize to 4-bit = model shrinks 4x but loses ~5% quality. GGUF format. This is why you can run 70B models on a gaming PC with 24GB VRAM.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--purple)">Model merging</div>
+          <div class="ic-desc">Take two fine-tuned models and merge their weights mathematically (SLERP, TIES, DARE). Get a hybrid that combines both skills. It's like breeding AIs. Wild stuff happening on HuggingFace.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-3" style="margin-top:24px">
+      <p style="font-size:14px;color:var(--muted);line-height:1.7;padding:16px 20px;border-left:2px solid var(--amber);background:#08080e;border-radius:0 8px 8px 0">
+        <span style="color:var(--amber);font-weight:600">Open vs Closed:</span> LLaMA, Mistral, DeepSeek, Qwen &mdash; you can download and run these. Claude, GPT-4, Gemini &mdash; closed weights, API-only. But you can still deeply customize closed models through system prompts, tool definitions, and configuration files.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 5: FINE-TUNING DEEP DIVE ==================== -->
+<section class="section" id="s5">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 05 // FINE-TUNING</div>
+      <div class="sec-title">Retraining a model <span class="accent">on your data</span></div>
+      <p class="sec-desc">Fine-tuning takes a pre-trained LLM and further trains it on YOUR specific data &mdash; your codebase, your documents, your domain. The model's weights shift slightly to become an expert in your world.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; WHICH MODELS CAN YOU FINE-TUNE?</p>
+      <div class="finetune-comparison" style="margin:20px 0">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <!-- Open weight models -->
+          <div class="info-card" style="border-color:var(--green3)">
+            <div class="ic-title" style="color:var(--green)">DeepSeek R1/V3</div>
+            <div class="ic-desc">
+              <span style="color:var(--green);font-family:var(--mono);font-size:10px">&#9679; FULL ACCESS</span><br>
+              Open weights. Download &amp; fine-tune locally. 671B MoE model, distilled versions (7B-70B) easier to train. Apache 2.0 license.
+            </div>
+          </div>
+          <div class="info-card" style="border-color:var(--green3)">
+            <div class="ic-title" style="color:var(--green)">LLaMA 3.1</div>
+            <div class="ic-desc">
+              <span style="color:var(--green);font-family:var(--mono);font-size:10px">&#9679; FULL ACCESS</span><br>
+              Meta's open weights. 8B, 70B, 405B variants. Most popular base for fine-tuning. Massive community &amp; tooling support.
+            </div>
+          </div>
+          <div class="info-card" style="border-color:var(--green3)">
+            <div class="ic-title" style="color:var(--green)">Mistral / Mixtral</div>
+            <div class="ic-desc">
+              <span style="color:var(--green);font-family:var(--mono);font-size:10px">&#9679; FULL ACCESS</span><br>
+              Open weights. 7B, 8x22B MoE. Great efficiency. Popular for production fine-tunes. Apache license.
+            </div>
+          </div>
+          <div class="info-card" style="border-color:var(--green3)">
+            <div class="ic-title" style="color:var(--green)">Qwen 2.5</div>
+            <div class="ic-desc">
+              <span style="color:var(--green);font-family:var(--mono);font-size:10px">&#9679; FULL ACCESS</span><br>
+              Alibaba's open weights. 0.5B to 72B. Strong multilingual &amp; code. Very competitive with LLaMA.
+            </div>
+          </div>
+          <!-- API fine-tune -->
+          <div class="info-card" style="border-color:#3d2f00">
+            <div class="ic-title" style="color:var(--amber)">GPT-4o / GPT-4o-mini</div>
+            <div class="ic-desc">
+              <span style="color:var(--amber);font-family:var(--mono);font-size:10px">&#9679; API FINE-TUNE</span><br>
+              Upload JSONL via OpenAI API. They train on their servers. You get a custom model ID. No weight access &mdash; you rent the result.
+            </div>
+          </div>
+          <div class="info-card" style="border-color:#3d2f00">
+            <div class="ic-title" style="color:var(--amber)">Claude (Anthropic)</div>
+            <div class="ic-desc">
+              <span style="color:var(--amber);font-family:var(--mono);font-size:10px">&#9679; API FINE-TUNE</span><br>
+              Available for enterprise. You send training data to Anthropic, they fine-tune on their infra. Custom model accessible via API. No weight download.
+            </div>
+          </div>
+          <div class="info-card" style="border-color:#3d2f00">
+            <div class="ic-title" style="color:var(--amber)">Gemini (Google)</div>
+            <div class="ic-desc">
+              <span style="color:var(--amber);font-family:var(--mono);font-size:10px">&#9679; API FINE-TUNE</span><br>
+              Google AI Studio or Vertex AI. Upload data, tune via API. Result hosted on Google Cloud. You don't get the weights.
+            </div>
+          </div>
+          <div class="info-card" style="border-color:#3d0011">
+            <div class="ic-title" style="color:var(--red)">Grok (xAI)</div>
+            <div class="ic-desc">
+              <span style="color:var(--red);font-family:var(--mono);font-size:10px">&#9679; LIMITED</span><br>
+              Grok-1 weights released (314B MoE). Fine-tuning possible but impractical &mdash; requires massive hardware. No API fine-tune yet.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-2" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; THE FINE-TUNING PROCESS &mdash; STEP BY STEP</p>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--cyan)">1. Prepare your dataset</div>
+            <div class="fc-desc">Convert your data into training format: prompt/completion pairs (JSONL). For coding: input = task description, output = ideal code. Need 100-10,000+ examples depending on the task. Quality > quantity &mdash; garbage in = garbage out.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--amber)">2. Choose your method</div>
+            <div class="fc-desc">
+              <b style="color:var(--text)">Full fine-tune</b> &mdash; retrain all weights. Best quality, needs 4-8x A100 GPUs ($2-10K+ per run).<br>
+              <b style="color:var(--text)">LoRA</b> &mdash; freeze base, train small adapters. 10-100x cheaper. 95% of full quality. Most people use this.<br>
+              <b style="color:var(--text)">QLoRA</b> &mdash; LoRA on a quantized (4-bit) model. Runs on a single GPU. ~90% of full quality.
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--purple)">3. Train</div>
+            <div class="fc-desc">Feed examples through the model. Calculate loss (how wrong was the prediction?). Adjust weights using backpropagation. Repeat for 1-5 epochs. Monitor for overfitting &mdash; if the model memorizes your data instead of learning patterns, it'll fail on new inputs.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--green)">4. Evaluate</div>
+            <div class="fc-desc">Test on held-out data the model never saw during training. Compare outputs against your ground truth. Metrics: perplexity, BLEU, human eval. If quality is bad &rarr; more/better data, adjust hyperparameters, try different base model.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-line"></div>
+          <div class="flow-card">
+            <div class="fc-title" style="color:var(--red)">5. Deploy</div>
+            <div class="fc-desc">Export weights (or LoRA adapter). Quantize to 4-bit for production. Serve via vLLM, TGI, Ollama, or upload to HuggingFace. For API fine-tunes (OpenAI/Anthropic) &mdash; you just get a model ID to use in API calls.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-3" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; REAL EXAMPLE &mdash; FINE-TUNE DEEPSEEK-CODER ON YOUR CODEBASE</p>
+      <div class="terminal">
+        <div class="term-bar"><div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div><span class="term-title">fine-tuning with unsloth (QLoRA)</span></div>
+        <div class="term-body" id="finetuneDemo"></div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-4" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; INTERACTIVE &mdash; TRAINING DATA FORMAT</p>
+      <div class="playground">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.6">Fine-tuning data = pairs of <b style="color:var(--text)">input &rarr; desired output</b>. Click examples to see the actual JSONL format used by different providers.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="ft-tab active" data-format="openai" style="background:var(--bg2);border:1px solid var(--green3);border-radius:4px;padding:6px 14px;color:var(--green);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .3s">OpenAI format</button>
+          <button class="ft-tab" data-format="alpaca" style="background:var(--bg2);border:1px solid #1a1a2e;border-radius:4px;padding:6px 14px;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .3s">Alpaca format</button>
+          <button class="ft-tab" data-format="sharegpt" style="background:var(--bg2);border:1px solid #1a1a2e;border-radius:4px;padding:6px 14px;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .3s">ShareGPT format</button>
+          <button class="ft-tab" data-format="anthropic" style="background:var(--bg2);border:1px solid #1a1a2e;border-radius:4px;padding:6px 14px;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .3s">Anthropic format</button>
+        </div>
+        <div class="code-block" id="ftFormatDisplay" style="margin:0;font-size:11px;line-height:1.9">
+          <noscript><span class="c-com">// OpenAI fine-tuning format (JSONL)</span><br>{<br>  <span class="c-key">"messages"</span>: [<br>    {<span class="c-key">"role"</span>: <span class="c-str">"system"</span>, <span class="c-key">"content"</span>: <span class="c-str">"You are a senior developer."</span>},<br>    {<span class="c-key">"role"</span>: <span class="c-str">"user"</span>, <span class="c-key">"content"</span>: <span class="c-str">"Write a validation function"</span>},<br>    {<span class="c-key">"role"</span>: <span class="c-str">"assistant"</span>, <span class="c-key">"content"</span>: <span class="c-str">"export function validate(input: string)..."</span>}<br>  ]<br>}</noscript>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; COST &amp; HARDWARE REALITY CHECK</p>
+      <div class="playground">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Select model size and method to see estimated costs:</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--muted);display:block;margin-bottom:6px">model size:</span>
+            <select id="costModelSize" style="background:#0c0c14;border:1px solid #1a1a2e;border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;cursor:pointer">
+              <option value="7">7B (e.g. Mistral 7B, Qwen 7B)</option>
+              <option value="13">13B (e.g. LLaMA 13B)</option>
+              <option value="34">34B (e.g. CodeLlama 34B)</option>
+              <option value="70" selected>70B (e.g. LLaMA 3.1 70B)</option>
+              <option value="405">405B (e.g. LLaMA 3.1 405B)</option>
+            </select>
+          </div>
+          <div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--muted);display:block;margin-bottom:6px">method:</span>
+            <select id="costMethod" style="background:#0c0c14;border:1px solid #1a1a2e;border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;cursor:pointer">
+              <option value="qlora">QLoRA (4-bit)</option>
+              <option value="lora" selected>LoRA (16-bit)</option>
+              <option value="full">Full fine-tune</option>
+            </select>
+          </div>
+          <div>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--muted);display:block;margin-bottom:6px">dataset:</span>
+            <select id="costDataset" style="background:#0c0c14;border:1px solid #1a1a2e;border-radius:4px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;cursor:pointer">
+              <option value="1000">1,000 examples</option>
+              <option value="5000" selected>5,000 examples</option>
+              <option value="10000">10,000 examples</option>
+              <option value="50000">50,000 examples</option>
+            </select>
+          </div>
+        </div>
+        <div id="costEstimate" style="font-family:var(--mono);font-size:13px;line-height:2"></div>
+      </div>
+    </div>
+
+    <div class="reveal" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; WHEN TO FINE-TUNE vs WHEN NOT TO</p>
+      <div class="info-grid">
+        <div class="info-card" style="border-color:var(--green3)">
+          <div class="ic-title" style="color:var(--green)">Fine-tune when...</div>
+          <div class="ic-desc">
+            &bull; You need a specific output format consistently<br>
+            &bull; Domain-specific language (legal, medical, Latvian accounting)<br>
+            &bull; You have 500+ high-quality examples<br>
+            &bull; Prompt engineering alone isn't hitting your quality bar<br>
+            &bull; You need lower latency (smaller fine-tuned model &gt; big general model)<br>
+            &bull; You want to reduce per-request costs at scale
+          </div>
+        </div>
+        <div class="info-card" style="border-color:#3d0011">
+          <div class="ic-title" style="color:var(--red)">Don't fine-tune when...</div>
+          <div class="ic-desc">
+            &bull; A good system prompt + few-shot examples solve it<br>
+            &bull; You have &lt;100 examples (will overfit)<br>
+            &bull; The task requires broad general knowledge<br>
+            &bull; RAG (retrieval) would work better (dynamic data)<br>
+            &bull; You need to update knowledge frequently (retrain is slow)<br>
+            &bull; You just want the model to "know" your docs (use RAG instead)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 6: THE AGENT PATTERN ==================== -->
+<section class="section" id="s6" style="background:var(--bg2)">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 06 // THE AGENT</div>
+      <div class="sec-title">How LLMs become <span class="accent">coding agents</span></div>
+      <p class="sec-desc">The model alone just predicts text. Wrap it in a tool-calling loop with file access, shell commands, and git &mdash; now it's an autonomous coding agent. This is how Cursor, Copilot, Claude Code, Windsurf, and every AI IDE works.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; CLICK EACH STEP TO SEE THE DETAILS</p>
+      <div class="tool-demo" id="toolDemo">
+        <div class="tool-step active" data-step="0">
+          <div class="step-num">STEP 01</div>
+          <div class="step-title">You give a task</div>
+          <div class="step-desc">You type: "Fix the failing auth tests"</div>
+          <div class="step-detail">
+            <div class="code-block" style="margin:0;font-size:11px">
+The agent wraps your message in a <span class="c-key">system prompt</span> containing:<br>
+&bull; Project context (file tree, recent changes, docs)<br>
+&bull; Available tools (read files, edit, run commands, search)<br>
+&bull; Rules &amp; constraints (from config files like CLAUDE.md, .cursorrules, etc.)<br>
+&bull; Conversation history<br><br>
+This assembled prompt can be <span class="c-num">50,000-200,000 tokens</span> long.
+            </div>
+          </div>
+        </div>
+        <div class="tool-connector"></div>
+        <div class="tool-step" data-step="1">
+          <div class="step-num">STEP 02</div>
+          <div class="step-title">LLM reasons & picks a tool</div>
+          <div class="step-desc">The model doesn't output text &mdash; it outputs a structured tool call.</div>
+          <div class="step-detail">
+            <div class="code-block" style="margin:0;font-size:11px">
+<span class="c-com">// The LLM returns JSON like this:</span>
+{
+  <span class="c-key">"tool"</span>: <span class="c-str">"bash"</span>,
+  <span class="c-key">"args"</span>: {
+    <span class="c-key">"command"</span>: <span class="c-str">"npm test -- src/auth/ --no-coverage"</span>
+  },
+  <span class="c-key">"reasoning"</span>: <span class="c-str">"Need to see which tests fail first"</span>
+}
+<br><span class="c-com">// This is called "function calling" or "tool use".</span>
+<span class="c-com">// The model was trained to output structured JSON tool calls</span>
+<span class="c-com">// instead of plain text when tools are available.</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-connector"></div>
+        <div class="tool-step" data-step="2">
+          <div class="step-num">STEP 03</div>
+          <div class="step-title">Agent executes the tool</div>
+          <div class="step-desc">The host app runs the command on YOUR machine and captures the output.</div>
+          <div class="step-detail">
+            <div class="code-block" style="margin:0;font-size:11px">
+<span class="c-com">// The agent (Cursor, Claude Code, Copilot, etc.) does:</span>
+<span class="c-num">1.</span> Parse the tool call JSON
+<span class="c-num">2.</span> Check permissions (should this be allowed?)
+<span class="c-num">3.</span> Execute: <span class="c-fn">spawn("npm test -- src/auth/")</span>
+<span class="c-num">4.</span> Capture stdout + stderr
+<span class="c-num">5.</span> Feed result back to the LLM as a new message<br>
+<span class="c-com">// The LLM never touches your filesystem directly.</span>
+<span class="c-com">// The agent app is the middleware.</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-connector"></div>
+        <div class="tool-step" data-step="3">
+          <div class="step-num">STEP 04</div>
+          <div class="step-title">LLM observes & decides next action</div>
+          <div class="step-desc">Sees test output, reads relevant files, makes edits, runs tests again.</div>
+          <div class="step-detail">
+            <div class="code-block" style="margin:0;font-size:11px">
+<span class="c-com">// The loop:</span>
+<span class="c-key">while</span> (!done) {
+  response = <span class="c-fn">LLM</span>(system_prompt + conversation + tool_results)
+  <span class="c-key">if</span> (response.has_tool_call) {
+    result = <span class="c-fn">execute_tool</span>(response.tool_call)
+    conversation.<span class="c-fn">append</span>(result)
+  } <span class="c-key">else</span> {
+    <span class="c-com">// Model returned plain text = it's done</span>
+    <span class="c-fn">show_to_user</span>(response.text)
+    done = <span class="c-num">true</span>
+  }
+}<br>
+<span class="c-com">// This "reason → act → observe" loop IS the agent.</span>
+<span class="c-com">// Every AI coding tool uses this exact pattern.</span>
+            </div>
+          </div>
+        </div>
+        <div class="tool-connector"></div>
+        <div class="tool-step" data-step="4">
+          <div class="step-num">STEP 05</div>
+          <div class="step-title">Task complete</div>
+          <div class="step-desc">Tests pass. The model returns a text summary instead of another tool call.</div>
+          <div class="step-detail">
+            <div class="code-block" style="margin:0;font-size:11px">
+A single "fix the auth tests" task might involve:<br>
+&bull; <span class="c-num">1</span> bash call (run tests)
+&bull; <span class="c-num">2</span> file reads (source + test file)
+&bull; <span class="c-num">1</span> file edit (fix the bug)
+&bull; <span class="c-num">1</span> bash call (re-run tests)
+&bull; <span class="c-num">1</span> git commit<br>
+= <span class="c-num">6 tool calls</span>, <span class="c-num">6 LLM roundtrips</span>, ~30 seconds total.<br>
+<span class="c-com">// Complex tasks can be 50-100+ tool calls.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-2" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; THE TOOLS EVERY AI CODING AGENT HAS</p>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--cyan)">Read / Search Files</div>
+          <div class="ic-desc">Read specific files or search the codebase using grep/ripgrep/AST parsing. The model requests EXACTLY what it needs &mdash; it doesn't load your whole repo into context.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--amber)">Edit Files</div>
+          <div class="ic-desc">Targeted diffs, not full file rewrites. The model specifies "replace lines 42-48 with..." rather than regenerating the whole file. This keeps edits precise and reviewable.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--green)">Execute Commands</div>
+          <div class="ic-desc">Run tests, install packages, build the project, start servers. Shell access is what makes it an agent vs. a chatbot. The model sees stdout/stderr and reacts.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--purple)">Sub-agents</div>
+          <div class="ic-desc">Spawn parallel workers for complex tasks. "Search for all auth-related files" and "check test coverage" can run simultaneously. This is how agents handle large codebases efficiently.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 6: CONTEXT WINDOW ==================== -->
+<section class="section" id="s7">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 07 // CONTEXT</div>
+      <div class="sec-title">The <span class="accent">context window</span> problem</div>
+      <p class="sec-desc">An LLM can only "see" a fixed amount of text at once. This limit &mdash; the context window &mdash; is the single biggest constraint in AI coding. Everything else is engineering around it.</p>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:8px;letter-spacing:2px">&#9656; CONTEXT WINDOW SIZES</p>
+      <div class="bar-chart">
+        <div class="bar-row"><span class="bar-label">GPT-3.5</span><div class="bar-track"><div class="bar-fill" style="--w:3%;background:var(--muted)"></div></div><span class="bar-val">4K</span></div>
+        <div class="bar-row"><span class="bar-label">GPT-4</span><div class="bar-track"><div class="bar-fill" style="--w:10%;background:var(--purple)"></div></div><span class="bar-val">32K</span></div>
+        <div class="bar-row"><span class="bar-label">Claude 3.5</span><div class="bar-track"><div class="bar-fill" style="--w:30%;background:var(--green)"></div></div><span class="bar-val">200K</span></div>
+        <div class="bar-row"><span class="bar-label">Gemini 1.5</span><div class="bar-track"><div class="bar-fill" style="--w:60%;background:var(--cyan)"></div></div><span class="bar-val">1M</span></div>
+        <div class="bar-row"><span class="bar-label">Gemini 2</span><div class="bar-track"><div class="bar-fill" style="--w:90%;background:var(--amber)"></div></div><span class="bar-val">2M</span></div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);font-style:italic;margin-top:4px">200K tokens &asymp; 500 pages of text &asymp; a medium codebase. But most real projects are much larger.</p>
+    </div>
+
+    <div class="reveal reveal-delay-2" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:8px;letter-spacing:2px">&#9656; WHAT FILLS THE CONTEXT WINDOW</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Hover segments to see what takes up space:</p>
+      <div class="context-window" id="contextVis">
+        <div class="context-segment" data-label="System prompt & instructions (8%)" style="width:8%;background:var(--purple)"></div>
+        <div class="context-segment" data-label="Project config & rules (4%)" style="width:4%;background:var(--amber)"></div>
+        <div class="context-segment" data-label="Tool definitions (6%)" style="width:6%;background:var(--cyan)"></div>
+        <div class="context-segment" data-label="Conversation history (25%)" style="width:25%;background:var(--green)"></div>
+        <div class="context-segment" data-label="File contents read by tools (35%)" style="width:35%;background:var(--green2)"></div>
+        <div class="context-segment" data-label="Tool call results (15%)" style="width:15%;background:var(--red)"></div>
+        <div class="context-segment" data-label="Available for new generation (7%)" style="width:7%;background:var(--muted)"></div>
+      </div>
+      <div class="context-legend">
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--purple)"></div>System prompt</div>
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--amber)"></div>Config</div>
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--cyan)"></div>Tools</div>
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--green)"></div>Chat history</div>
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--green2)"></div>File reads</div>
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--red)"></div>Results</div>
+        <div class="context-legend-item"><div class="context-legend-dot" style="background:var(--muted)"></div>Free space</div>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-3" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; HOW AI CODING TOOLS DEAL WITH THIS</p>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--cyan)">Smart Retrieval</div>
+          <div class="ic-desc">Don't load whole files &mdash; use AST parsing, symbol search, and grep to pull ONLY the relevant functions and classes. Tree-sitter parses code structure so the agent knows what to grab.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--amber)">Context Compaction</div>
+          <div class="ic-desc">When the window fills up, older messages get summarized. "You edited auth.ts lines 42-48 to fix UTC comparison" instead of keeping the full file diff in context.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--green)">Embeddings + RAG</div>
+          <div class="ic-desc">Index the codebase into a vector database. When you ask about auth, retrieve the top-k most relevant code chunks by semantic similarity. Cursor and Copilot do this aggressively.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--purple)">Multi-Agent</div>
+          <div class="ic-desc">Spawn sub-agents with fresh context windows for sub-tasks. Each gets a focused slice of the problem. Results get compressed and sent back to the main agent. Parallelism + isolation.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHAPTER 7: THE BIG PICTURE ==================== -->
+<section class="section" id="s8" style="background:var(--bg2)">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="sec-num">CHAPTER 08 // THE MAP</div>
+      <div class="sec-title">The full <span class="accent">stack</span>, one view</div>
+    </div>
+
+    <div class="reveal reveal-delay-1">
+      <div class="code-block" style="font-size:13px;line-height:2.2">
+        <span class="lang">the whole picture</span>
+<span class="c-com">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="c-com">&#9474;</span>  <span style="color:var(--text);font-weight:700">YOU</span> type: <span class="c-str">"fix the failing auth tests"</span>            <span class="c-com">&#9474;</span>
+<span class="c-com">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                       <span class="c-com">&#9660;</span>
+<span class="c-com">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="c-com">&#9474;</span>  <span style="color:var(--green);font-weight:700">AI CODING TOOL</span> (Cursor / Copilot / Claude Code / etc)  <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Loads: project config + file index + tool definitions    <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Builds prompt: your msg + context + available tools      <span class="c-com">&#9474;</span>
+<span class="c-com">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                       <span class="c-com">&#9660;</span>
+<span class="c-com">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="c-com">&#9474;</span>  <span style="color:var(--purple);font-weight:700">LLM API</span> (Anthropic / OpenAI / local Ollama server)     <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Tokens &rarr; Embeddings &rarr; 96 layers &rarr; Next token pred      <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Hundreds of billions of weights do the thinking         <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Returns: tool call JSON or text response                <span class="c-com">&#9474;</span>
+<span class="c-com">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                       <span class="c-com">&#9660;</span>
+<span class="c-com">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="c-com">&#9474;</span>  <span style="color:var(--amber);font-weight:700">TOOL EXECUTOR</span> (runs on YOUR machine)                 <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Checks permissions &rarr; Runs tool &rarr; Returns result         <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  read_file, edit_file, bash, search, git                 <span class="c-com">&#9474;</span>
+<span class="c-com">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+                       <span class="c-com">&#9660;</span>
+<span class="c-com">&#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;</span>
+<span class="c-com">&#9474;</span>  <span style="color:var(--cyan);font-weight:700">YOUR CODEBASE</span> (files, git, shell, databases)          <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  Result feeds back &rarr; LLM reasons &rarr; next tool call     <span class="c-com">&#9474;</span>
+<span class="c-com">&#9474;</span>  <span class="c-op">&#8635; LOOP until task complete or you stop it</span>              <span class="c-com">&#9474;</span>
+<span class="c-com">&#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+      </div>
+    </div>
+
+    <div class="reveal reveal-delay-2" style="margin-top:24px">
+      <p style="font-family:var(--mono);font-size:11px;color:var(--green);margin-bottom:12px;letter-spacing:2px">&#9656; AI CODING TOOLS COMPARED</p>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--purple)">Cursor / Windsurf</div>
+          <div class="ic-desc">IDE-based. Deep editor integration. Sees your open tabs, cursor position, selections. Good for inline completions + chat. Uses RAG to index your project. Multiple model choices.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--cyan)">GitHub Copilot</div>
+          <div class="ic-desc">VS Code extension + CLI. Inline completions (fast, small model) + chat agent (larger model). Workspace indexing. Tight GitHub integration for PRs and issues.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--green)">Claude Code</div>
+          <div class="ic-desc">Terminal-based CLI agent. No IDE needed. Full filesystem + shell access. Spawns sub-agents. MCP protocol for external tools. Raw power for large refactors and complex tasks.</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-title" style="color:var(--amber)">Aider / Open Source</div>
+          <div class="ic-desc">Open-source CLI agents. Works with any LLM (local or API). Full transparency &mdash; you can read the source. Community-driven. Good for learning how agents actually work.</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:16px;line-height:1.6">
+        Under the hood, they ALL use the same pattern: <b style="color:var(--text)">assemble context &rarr; call LLM &rarr; execute tool &rarr; feed result back &rarr; repeat</b>. The differences are in UX, context management, and which models they support.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-text">// END TRANSMISSION // BUILT FOR REINIS // 2026</div>
+</div>
+
+<script>
+// ========== MATRIX RAIN ==========
+const matrixBg = document.getElementById('matrixBg');
+const chars = '01{}<>[]|=+-*&^%$#@!?';
+for (let i = 0; i < 30; i++) {
+  const col = document.createElement('div');
+  col.className = 'matrix-col';
+  col.style.left = (i * 3.5) + '%';
+  col.style.animationDuration = (8 + Math.random() * 12) + 's';
+  col.style.animationDelay = (Math.random() * 5) + 's';
+  col.style.fontSize = (10 + Math.random() * 8) + 'px';
+  let text = '';
+  for (let j = 0; j < 60; j++) text += chars[Math.floor(Math.random() * chars.length)] + ' ';
+  col.textContent = text;
+  matrixBg.appendChild(col);
+}
+
+// ========== REVEAL ON SCROLL ==========
+const revealEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+revealEls.forEach(el => io.observe(el));
+
+// ========== NEURAL NET CANVAS ==========
+const canvas = document.getElementById('nnCanvas');
+const ctx = canvas.getContext('2d');
+let neurons = [];
+let connections = [];
+
+function initNN() {
+  canvas.width = canvas.offsetWidth * 2;
+  canvas.height = canvas.offsetHeight * 2;
+  ctx.scale(2, 2);
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  const layers = [6, 10, 12, 10, 8, 4];
+  neurons = [];
+  connections = [];
+
+  layers.forEach((count, li) => {
+    const x = 60 + (li / (layers.length - 1)) * (w - 120);
+    for (let ni = 0; ni < count; ni++) {
+      const y = (h / 2) - ((count - 1) * 28 / 2) + ni * 28;
+      neurons.push({ x, y, layer: li, fire: 0 });
+    }
+  });
+
+  for (let i = 0; i < neurons.length; i++) {
+    for (let j = 0; j < neurons.length; j++) {
+      if (neurons[j].layer === neurons[i].layer + 1) {
+        const weight = Math.random() * 2 - 1;
+        connections.push({ from: i, to: j, weight, signal: 0 });
+      }
+    }
+  }
+}
+
+function drawNN() {
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  connections.forEach(c => {
+    const a = neurons[c.from], b = neurons[c.to];
+    const alpha = Math.abs(c.weight) * 0.3 + c.signal * 0.5;
+    const hue = c.weight > 0 ? '160,100%,50%' : '0,100%,60%';
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = `hsla(${hue},${alpha})`;
+    ctx.lineWidth = Math.abs(c.weight) * 1.2 + c.signal * 1.5;
+    ctx.stroke();
+    c.signal *= 0.96;
+  });
+
+  neurons.forEach((n, i) => {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 5 + n.fire * 4, 0, Math.PI * 2);
+    const glow = n.fire;
+    ctx.fillStyle = `rgba(0,255,136,${0.3 + glow * 0.7})`;
+    ctx.fill();
+    if (glow > 0.1) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 5 + n.fire * 12, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,255,136,${glow * 0.15})`;
+      ctx.fill();
+    }
+    n.fire *= 0.94;
+  });
+
+  ctx.font = '11px JetBrains Mono';
+  ctx.fillStyle = '#4a4a5a';
+  ctx.textAlign = 'center';
+  const labels = ['input', 'embed', 'attn', 'ffn', 'attn', 'output'];
+  const layerXs = [...new Set(neurons.map(n => n.x))];
+  labels.forEach((l, i) => {
+    if (layerXs[i]) ctx.fillText(l, layerXs[i], h - 12);
+  });
+
+  requestAnimationFrame(drawNN);
+}
+
+function fireNeuron(startIdx) {
+  const layer0 = neurons.filter(n => n.layer === 0);
+  const start = startIdx !== undefined ? neurons[startIdx] : layer0[Math.floor(Math.random() * layer0.length)];
+  if (!start) return;
+  start.fire = 1;
+
+  let queue = [neurons.indexOf(start)];
+  let delay = 0;
+  while (queue.length > 0) {
+    const nextQueue = [];
+    queue.forEach(ni => {
+      connections.filter(c => c.from === ni).forEach(c => {
+        setTimeout(() => {
+          c.signal = Math.abs(c.weight);
+          neurons[c.to].fire = Math.max(neurons[c.to].fire, Math.abs(c.weight));
+          nextQueue.push(c.to);
+        }, delay);
+      });
+    });
+    queue = [...new Set(nextQueue)];
+    delay += 120;
+  }
+}
+
+// Click to fire
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  let closest = null, minDist = Infinity;
+  neurons.forEach((n, i) => {
+    const d = Math.hypot(n.x - mx, n.y - my);
+    if (d < minDist) { minDist = d; closest = i; }
+  });
+  if (closest !== null && minDist < 30) {
+    neurons[closest].fire = 1;
+    fireNeuron(closest);
+  } else {
+    fireNeuron();
+  }
+});
+
+setTimeout(() => {
+  initNN();
+  drawNN();
+  setInterval(fireNeuron, 1200);
+  window.addEventListener('resize', initNN);
+}, 500);
+
+// ========== WEIGHT GRID ==========
+const weightGrid = document.getElementById('weightGrid');
+for (let i = 0; i < 256; i++) {
+  const cell = document.createElement('div');
+  cell.className = 'weight-cell';
+  const val = Math.random() * 2 - 1;
+  if (val > 0) {
+    cell.style.background = `rgba(0,255,136,${val * 0.8})`;
+  } else {
+    cell.style.background = `rgba(255,51,102,${Math.abs(val) * 0.6})`;
+  }
+  weightGrid.appendChild(cell);
+}
+setInterval(() => {
+  const cells = weightGrid.children;
+  for (let i = 0; i < 5; i++) {
+    const idx = Math.floor(Math.random() * cells.length);
+    const val = Math.random() * 2 - 1;
+    if (val > 0) {
+      cells[idx].style.background = `rgba(0,255,136,${val * 0.8})`;
+    } else {
+      cells[idx].style.background = `rgba(255,51,102,${Math.abs(val) * 0.6})`;
+    }
+  }
+}, 200);
+
+// ========== TOKENIZER PLAYGROUND ==========
+// Simplified BPE-like tokenizer for demonstration
+const commonTokens = [
+  'function','return','const','let','var','if','else','for','while','class','import','export','from',
+  'async','await','new','this','null','undefined','true','false','try','catch','throw','switch','case',
+  'break','continue','default','typeof','instanceof','void','delete','in','of','do','yield','super',
+  'extends','implements','interface','type','enum','public','private','protected','static','readonly',
+  'abstract','declare','module','namespace','require','package','constructor','get','set',
+  'The','the','that','this','with','from','have','been','will','would','could','should','about',
+  'which','their','there','them','then','than','some','other','into','over','after','also','made',
+  '.map','.filter','.reduce','.forEach','.find','.push','.pop','.length','.toString','.valueOf',
+  '=>','=>{','===','!==','&&','||','++','--','+=','-=','**','...','?.','??',
+  'console','document','window','process','Math','JSON','Array','Object','String','Number','Error',
+  'useState','useEffect','useRef','useCallback','useMemo',
+];
+
+function simpleTokenize(text) {
+  if (!text) return [];
+  const tokens = [];
+  let i = 0;
+  while (i < text.length) {
+    // skip whitespace as its own token
+    if (/\s/.test(text[i])) {
+      let ws = '';
+      while (i < text.length && /\s/.test(text[i])) { ws += text[i]; i++; }
+      if (ws.length > 0) tokens.push({ text: ws.replace(/ /g, '\u00B7').replace(/\n/g, '\\n'), type: 'ws' });
+      continue;
+    }
+    // Try matching known tokens (longest first)
+    let matched = false;
+    const remaining = text.slice(i);
+    for (const tok of commonTokens.sort((a, b) => b.length - a.length)) {
+      if (remaining.startsWith(tok)) {
+        tokens.push({ text: tok, type: 'known' });
+        i += tok.length;
+        matched = true;
+        break;
+      }
+    }
+    if (matched) continue;
+    // Numbers
+    if (/[0-9]/.test(text[i])) {
+      let num = '';
+      while (i < text.length && /[0-9.]/.test(text[i])) { num += text[i]; i++; }
+      tokens.push({ text: num, type: 'num' });
+      continue;
+    }
+    // Identifiers
+    if (/[a-zA-Z_$]/.test(text[i])) {
+      let id = '';
+      while (i < text.length && /[a-zA-Z0-9_$]/.test(text[i])) { id += text[i]; i++; }
+      // Split long identifiers into sub-words
+      if (id.length > 6) {
+        const parts = id.replace(/([a-z])([A-Z])/g, '$1|$2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1|$2').split('|');
+        parts.forEach(p => tokens.push({ text: p, type: 'word' }));
+      } else {
+        tokens.push({ text: id, type: 'word' });
+      }
+      continue;
+    }
+    // Single char
+    tokens.push({ text: text[i], type: 'punct' });
+    i++;
+  }
+  return tokens;
+}
+
+const tokenColors = {
+  known: { bg: 'rgba(0,255,136,0.15)', border: 'rgba(0,255,136,0.4)', color: '#00ff88' },
+  word: { bg: 'rgba(0,229,255,0.12)', border: 'rgba(0,229,255,0.35)', color: '#00e5ff' },
+  num: { bg: 'rgba(255,184,0,0.12)', border: 'rgba(255,184,0,0.35)', color: '#ffb800' },
+  punct: { bg: 'rgba(168,85,247,0.12)', border: 'rgba(168,85,247,0.35)', color: '#a855f7' },
+  ws: { bg: 'rgba(107,107,128,0.08)', border: 'rgba(107,107,128,0.2)', color: '#6b6b80' },
+};
+
+const tokenInput = document.getElementById('tokenInput');
+const tokenOutput = document.getElementById('tokenOutput');
+const tokenCount = document.getElementById('tokenCount');
+
+tokenInput.addEventListener('input', () => {
+  const text = tokenInput.value;
+  if (!text) {
+    tokenOutput.innerHTML = '<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">tokens will appear here...</span>';
+    tokenCount.textContent = '';
+    return;
+  }
+  const tokens = simpleTokenize(text);
+  const nonWs = tokens.filter(t => t.type !== 'ws');
+  tokenOutput.innerHTML = tokens.map((t, i) => {
+    const c = tokenColors[t.type];
+    const fakeId = Math.floor(Math.random() * 90000) + 10000;
+    return `<span class="token-chip" style="background:${c.bg};border-color:${c.border};color:${c.color}"><span class="token-id">id: ${fakeId}</span>${t.text}</span>`;
+  }).join('');
+  tokenCount.textContent = `${nonWs.length} tokens (${text.length} chars) ≈ ${(nonWs.length / 0.75).toFixed(0)} est. real tokens`;
+});
+
+// Pre-fill with example
+tokenInput.value = 'function calculateTotal(items) {\n  return items.reduce((sum, i) => sum + i.price, 0);\n}';
+tokenInput.dispatchEvent(new Event('input'));
+
+// ========== TEMPERATURE DEMO ==========
+const baseProbs = [
+  { token: 'return', prob: 0.35 },
+  { token: 'validate', prob: 0.18 },
+  { token: 'check', prob: 0.14 },
+  { token: 'handle', prob: 0.10 },
+  { token: 'process', prob: 0.08 },
+  { token: 'accept', prob: 0.06 },
+  { token: 'throw', prob: 0.04 },
+  { token: 'log', prob: 0.03 },
+  { token: 'dance', prob: 0.015 },
+  { token: 'banana', prob: 0.005 },
+];
+
+const tempSlider = document.getElementById('tempSlider');
+const tempValue = document.getElementById('tempValue');
+const probBars = document.getElementById('probBars');
+const tempExplain = document.getElementById('tempExplain');
+
+function softmax(logits, temperature) {
+  const t = Math.max(temperature, 0.01);
+  const scaled = logits.map(l => l / t);
+  const maxS = Math.max(...scaled);
+  const exps = scaled.map(s => Math.exp(s - maxS));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(e => e / sum);
+}
+
+function updateTempDemo() {
+  const temp = parseInt(tempSlider.value) / 100;
+  tempValue.textContent = temp.toFixed(2);
+
+  // Convert base probs to logits, then apply temperature
+  const logits = baseProbs.map(p => Math.log(p.prob + 1e-10));
+  const adjusted = softmax(logits, temp);
+
+  // Find selected (highest prob)
+  const maxIdx = adjusted.indexOf(Math.max(...adjusted));
+
+  const barColors = ['var(--green)', 'var(--cyan)', 'var(--cyan)', 'var(--amber)', 'var(--amber)',
+    'var(--purple)', 'var(--purple)', 'var(--muted)', 'var(--red)', 'var(--red)'];
+
+  probBars.innerHTML = adjusted.map((p, i) => {
+    const pct = (p * 100).toFixed(1);
+    const isSelected = i === maxIdx;
+    return `<div class="prob-row ${isSelected ? 'selected' : ''}">
+      <span class="prob-token">${baseProbs[i].token}</span>
+      <div class="prob-track"><div class="prob-fill" style="width:${p * 100}%;background:${isSelected ? 'var(--green)' : barColors[i]};opacity:${isSelected ? 1 : 0.6}"></div></div>
+      <span class="prob-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  if (temp < 0.3) {
+    tempExplain.textContent = 'Near-zero temperature → almost deterministic. The top token wins every time. Code generation uses low temps for reliability.';
+  } else if (temp < 0.8) {
+    tempExplain.textContent = 'Moderate temperature → mostly picks the top tokens, occasionally surprises. Good balance of quality and variety.';
+  } else if (temp < 1.2) {
+    tempExplain.textContent = 'Temperature ~1.0 → original distribution. More diverse outputs. Creative writing, brainstorming.';
+  } else {
+    tempExplain.textContent = 'High temperature → nearly random. Even rare tokens like "banana" get a real chance. Useful for diversity sampling, terrible for code.';
+  }
+}
+
+tempSlider.addEventListener('input', updateTempDemo);
+updateTempDemo();
+
+// ========== ATTENTION HEATMAP ==========
+const attnSentences = [
+  { tokens: ['The', 'cat', 'sat', 'on', 'the', 'mat'], weights: [
+    [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    [0.2, 1.0, 0.0, 0.0, 0.0, 0.0],
+    [0.1, 0.6, 1.0, 0.0, 0.0, 0.0],
+    [0.1, 0.1, 0.5, 1.0, 0.0, 0.0],
+    [0.5, 0.1, 0.1, 0.1, 1.0, 0.0],
+    [0.1, 0.1, 0.3, 0.1, 0.2, 1.0],
+  ]},
+  { tokens: ['function', 'get', 'User', '(', 'id', ')', '{', 'return', 'db', '.find', '(', 'id', ')'], weights: null },
+  { tokens: ['import', 'React', 'from', "'react'"], weights: null },
+];
+
+// Generate plausible attention for code sentences
+function generateAttention(tokens) {
+  const n = tokens.length;
+  const w = [];
+  for (let i = 0; i < n; i++) {
+    const row = [];
+    for (let j = 0; j < n; j++) {
+      if (j > i) { row.push(0); continue; } // causal mask
+      if (i === j) { row.push(0.8 + Math.random() * 0.2); continue; }
+      // Matching tokens attend strongly
+      if (tokens[i].toLowerCase() === tokens[j].toLowerCase()) { row.push(0.7 + Math.random() * 0.3); continue; }
+      // Brackets/parens attend to each other
+      if ('(){}[]'.includes(tokens[i]) && '(){}[]'.includes(tokens[j])) { row.push(0.4 + Math.random() * 0.3); continue; }
+      // Adjacent tokens
+      if (Math.abs(i - j) === 1) { row.push(0.2 + Math.random() * 0.3); continue; }
+      row.push(Math.random() * 0.2);
+    }
+    w.push(row);
+  }
+  return w;
+}
+
+attnSentences.forEach(s => { if (!s.weights) s.weights = generateAttention(s.tokens); });
+
+const attnDemo = document.getElementById('attnDemo');
+const attnSelect = document.getElementById('attnSelect');
+
+function renderAttention(idx) {
+  const s = attnSentences[idx];
+  const n = s.tokens.length;
+  const gridSize = n + 1;
+
+  let html = `<div class="attn-grid" style="grid-template-columns:60px repeat(${n}, 1fr)">`;
+  // Header row
+  html += '<div class="attn-label"></div>';
+  for (let j = 0; j < n; j++) {
+    html += `<div class="attn-label" style="color:var(--cyan);font-size:${n > 8 ? 9 : 11}px">${s.tokens[j]}</div>`;
+  }
+  // Data rows
+  for (let i = 0; i < n; i++) {
+    html += `<div class="attn-label" style="text-align:right;color:var(--green);font-size:${n > 8 ? 9 : 11}px">${s.tokens[i]}</div>`;
+    for (let j = 0; j < n; j++) {
+      const val = s.weights[i][j];
+      const bg = val > 0 ? `rgba(0,255,136,${val * 0.9})` : 'rgba(0,0,0,0.3)';
+      html += `<div class="attn-cell" style="background:${bg}" title="${s.tokens[i]} → ${s.tokens[j]}: ${val.toFixed(2)}">${val.toFixed(2)}</div>`;
+    }
+  }
+  html += '</div>';
+  html += `<p style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px">rows = "I am looking at..." / columns = "...this token" / upper-right is masked (can't look at future tokens)</p>`;
+  attnDemo.innerHTML = html;
+}
+
+attnSelect.addEventListener('change', () => renderAttention(parseInt(attnSelect.value)));
+renderAttention(0);
+
+// ========== TOOL DEMO INTERACTIVE ==========
+document.querySelectorAll('.tool-step').forEach(step => {
+  step.addEventListener('click', () => {
+    document.querySelectorAll('.tool-step').forEach(s => s.classList.remove('active'));
+    step.classList.add('active');
+  });
+});
+
+// ========== FINE-TUNE TERMINAL DEMO ==========
+const finetuneLines = [
+  { cls: 't-com', text: '# Step 1: Install Unsloth (fastest LoRA training library)' },
+  { cls: 't-prompt', text: '$ <span class="t-cmd">pip install unsloth</span>' },
+  { cls: 't-out', text: '' },
+  { cls: 't-com', text: '# Step 2: Prepare training data (JSONL format)' },
+  { cls: 't-prompt', text: '$ <span class="t-cmd">cat train.jsonl | head -1</span>' },
+  { cls: 't-out', text: '{"instruction":"Write a React hook for auth","output":"export function useAuth() { ... }"}' },
+  { cls: 't-out', text: '' },
+  { cls: 't-com', text: '# Step 3: Load base model + apply LoRA adapters' },
+  { cls: 't-prompt', text: '$ <span class="t-cmd">python train.py</span>' },
+  { cls: 't-out', text: 'Loading deepseek-coder-6.7b-instruct...' },
+  { cls: 't-out', text: 'Model loaded in 4-bit (QLoRA). VRAM: 8.2 GB / 24 GB' },
+  { cls: 't-out', text: 'LoRA config: r=16, alpha=32, target=q_proj,v_proj,k_proj,o_proj' },
+  { cls: 't-ok', text: 'Trainable params: 12.5M / 6.7B total (0.19%)' },
+  { cls: 't-out', text: '' },
+  { cls: 't-com', text: '# Step 4: Train (this takes 30min - 4hrs depending on data)' },
+  { cls: 't-out', text: 'Epoch 1/3 ████████████████████ 100% | loss: 1.842' },
+  { cls: 't-out', text: 'Epoch 2/3 ████████████████████ 100% | loss: 0.956' },
+  { cls: 't-out', text: 'Epoch 3/3 ████████████████████ 100% | loss: 0.412' },
+  { cls: 't-ok', text: 'Training complete. Adapter saved: ./output/lora-adapter/' },
+  { cls: 't-out', text: '' },
+  { cls: 't-com', text: '# Step 5: Merge LoRA into base model + export' },
+  { cls: 't-prompt', text: '$ <span class="t-cmd">python merge_and_export.py --format gguf --quant q4_k_m</span>' },
+  { cls: 't-out', text: 'Merging adapter into base model...' },
+  { cls: 't-out', text: 'Quantizing to 4-bit GGUF...' },
+  { cls: 't-ok', text: 'Exported: my-custom-coder-6.7b-q4.gguf (3.8 GB)' },
+  { cls: 't-out', text: '' },
+  { cls: 't-com', text: '# Step 6: Run your custom model locally!' },
+  { cls: 't-prompt', text: '$ <span class="t-cmd">ollama create my-coder -f Modelfile</span>' },
+  { cls: 't-prompt', text: '$ <span class="t-cmd">ollama run my-coder</span>' },
+  { cls: 't-ok', text: '>>> Your fine-tuned model is running locally.' },
+  { cls: 't-ok', text: '>>> It now speaks YOUR code style.' },
+];
+
+const finetuneDemo = document.getElementById('finetuneDemo');
+let ftVisible = false;
+const ftObserver = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting && !ftVisible) {
+    ftVisible = true;
+    finetuneLines.forEach((line, i) => {
+      setTimeout(() => {
+        const div = document.createElement('div');
+        div.className = 'term-line';
+        div.style.animationDelay = '0s';
+        div.innerHTML = `<span class="${line.cls}">${line.text}</span>`;
+        finetuneDemo.appendChild(div);
+        finetuneDemo.scrollTop = finetuneDemo.scrollHeight;
+      }, i * 140);
+    });
+  }
+}, { threshold: 0.3 });
+if (finetuneDemo) ftObserver.observe(finetuneDemo.parentElement.parentElement);
+
+// ========== TRAINING DATA FORMAT TABS ==========
+const ftFormats = {
+  openai: `<span class="c-com">// OpenAI fine-tuning format (JSONL)</span>
+<span class="c-com">// Used for: GPT-4o, GPT-4o-mini, GPT-3.5-turbo</span>
+
+{
+  <span class="c-key">"messages"</span>: [
+    {<span class="c-key">"role"</span>: <span class="c-str">"system"</span>, <span class="c-key">"content"</span>: <span class="c-str">"You are a senior TypeScript developer."</span>},
+    {<span class="c-key">"role"</span>: <span class="c-str">"user"</span>, <span class="c-key">"content"</span>: <span class="c-str">"Write a function to validate Latvian VAT numbers"</span>},
+    {<span class="c-key">"role"</span>: <span class="c-str">"assistant"</span>, <span class="c-key">"content"</span>: <span class="c-str">"export function validateLVVat(vat: string): boolean {\\n  const pattern = /^LV\\\\d{11}$/;\\n  return pattern.test(vat);\\n}"</span>}
+  ]
+}
+<span class="c-com">// One JSON object per line. 100-100,000 examples.</span>
+<span class="c-com">// Upload via: openai api fine_tuning.jobs.create</span>
+<span class="c-com">// Cost: ~$8/1M training tokens (GPT-4o-mini)</span>`,
+
+  alpaca: `<span class="c-com">// Alpaca format (JSON array)</span>
+<span class="c-com">// Used for: LLaMA, DeepSeek, Mistral, Qwen (via Unsloth/Axolotl)</span>
+
+{
+  <span class="c-key">"instruction"</span>: <span class="c-str">"Write a function to validate Latvian VAT numbers"</span>,
+  <span class="c-key">"input"</span>: <span class="c-str">""</span>,
+  <span class="c-key">"output"</span>: <span class="c-str">"export function validateLVVat(vat: string): boolean {\\n  const pattern = /^LV\\\\d{11}$/;\\n  return pattern.test(vat);\\n}"</span>
+}
+<span class="c-com">// "input" field is optional context (like a code snippet to modify)</span>
+<span class="c-com">// Most popular format for open-source fine-tuning</span>
+<span class="c-com">// Tools: Unsloth, Axolotl, HuggingFace TRL</span>`,
+
+  sharegpt: `<span class="c-com">// ShareGPT / conversation format</span>
+<span class="c-com">// Used for: multi-turn chat fine-tuning (any open model)</span>
+
+{
+  <span class="c-key">"conversations"</span>: [
+    {<span class="c-key">"from"</span>: <span class="c-str">"human"</span>, <span class="c-key">"value"</span>: <span class="c-str">"Write a function to validate Latvian VAT numbers"</span>},
+    {<span class="c-key">"from"</span>: <span class="c-str">"gpt"</span>, <span class="c-key">"value"</span>: <span class="c-str">"export function validateLVVat(vat: string): boolean {\\n  const pattern = /^LV\\\\d{11}$/;\\n  return pattern.test(vat);\\n}"</span>},
+    {<span class="c-key">"from"</span>: <span class="c-str">"human"</span>, <span class="c-key">"value"</span>: <span class="c-str">"Add a checksum validation step"</span>},
+    {<span class="c-key">"from"</span>: <span class="c-str">"gpt"</span>, <span class="c-key">"value"</span>: <span class="c-str">"export function validateLVVat(vat: string): boolean {\\n  // ... extended with checksum ...\\n}"</span>}
+  ]
+}
+<span class="c-com">// Great for teaching the model conversational coding style</span>
+<span class="c-com">// Can include multi-turn debugging, refactoring flows</span>`,
+
+  anthropic: `<span class="c-com">// Anthropic fine-tuning format (JSONL)</span>
+<span class="c-com">// Used for: Claude models (enterprise fine-tuning)</span>
+
+{
+  <span class="c-key">"messages"</span>: [
+    {<span class="c-key">"role"</span>: <span class="c-str">"user"</span>, <span class="c-key">"content"</span>: <span class="c-str">"Write a function to validate Latvian VAT numbers"</span>},
+    {<span class="c-key">"role"</span>: <span class="c-str">"assistant"</span>, <span class="c-key">"content"</span>: <span class="c-str">"export function validateLVVat(vat: string): boolean {\\n  const pattern = /^LV\\\\d{11}$/;\\n  return pattern.test(vat);\\n}"</span>}
+  ]
+}
+<span class="c-com">// Similar to OpenAI format but submitted to Anthropic</span>
+<span class="c-com">// Enterprise-only: contact Anthropic sales</span>
+<span class="c-com">// You don't get weights &mdash; you get a custom model endpoint</span>
+<span class="c-com">// Minimum ~1,000 examples recommended</span>`
+};
+
+const ftFormatDisplay = document.getElementById('ftFormatDisplay');
+const ftTabs = document.querySelectorAll('.ft-tab');
+
+function showFtFormat(format) {
+  ftFormatDisplay.innerHTML = ftFormats[format] || '';
+  ftTabs.forEach(tab => {
+    if (tab.dataset.format === format) {
+      tab.style.borderColor = 'var(--green3)';
+      tab.style.color = 'var(--green)';
+      tab.classList.add('active');
+    } else {
+      tab.style.borderColor = '#1a1a2e';
+      tab.style.color = 'var(--muted)';
+      tab.classList.remove('active');
+    }
+  });
+}
+
+ftTabs.forEach(tab => {
+  tab.addEventListener('click', () => showFtFormat(tab.dataset.format));
+});
+showFtFormat('openai');
+
+// ========== COST CALCULATOR ==========
+const costModelSize = document.getElementById('costModelSize');
+const costMethod = document.getElementById('costMethod');
+const costDataset = document.getElementById('costDataset');
+const costEstimate = document.getElementById('costEstimate');
+
+function updateCostEstimate() {
+  const size = parseInt(costModelSize.value);
+  const method = costMethod.value;
+  const examples = parseInt(costDataset.value);
+
+  // Rough estimates based on real-world benchmarks
+  const vramMap = {
+    qlora: { 7: 6, 13: 10, 34: 20, 70: 36, 405: 200 },
+    lora: { 7: 14, 13: 26, 34: 56, 70: 120, 405: 700 },
+    full: { 7: 28, 13: 52, 34: 140, 70: 280, 405: 1600 },
+  };
+  const gpuMap = {
+    qlora: { 7: '1x RTX 3090/4090', 13: '1x RTX 3090/4090', 34: '1x A100 40GB', 70: '1x A100 80GB', 405: '4x A100 80GB' },
+    lora: { 7: '1x RTX 3090', 13: '1x A100 40GB', 34: '2x A100 40GB', 70: '2x A100 80GB', 405: '8x A100 80GB' },
+    full: { 7: '1x A100 80GB', 13: '2x A100 80GB', 34: '4x A100 80GB', 70: '8x A100 80GB', 405: '32x A100 80GB' },
+  };
+  // Time in hours for 5000 examples at 3 epochs
+  const baseTimeMap = {
+    qlora: { 7: 0.5, 13: 1, 34: 2.5, 70: 5, 405: 20 },
+    lora: { 7: 1, 13: 2, 34: 5, 70: 10, 405: 48 },
+    full: { 7: 3, 13: 6, 34: 16, 70: 36, 405: 120 },
+  };
+  // Cloud cost per hour (A100 80GB ~ $2/hr on Lambda/RunPod)
+  const gpuCostPerHr = {
+    qlora: { 7: 1, 13: 1, 34: 2, 70: 2, 405: 8 },
+    lora: { 7: 1, 13: 2, 34: 4, 70: 4, 405: 16 },
+    full: { 7: 2, 13: 4, 34: 8, 70: 16, 405: 64 },
+  };
+
+  const vram = vramMap[method][size] || '?';
+  const gpu = gpuMap[method][size] || '?';
+  const baseTime = baseTimeMap[method][size] || 1;
+  const timeMultiplier = examples / 5000;
+  const time = (baseTime * timeMultiplier).toFixed(1);
+  const costPerHr = gpuCostPerHr[method][size] || 1;
+  const totalCost = (baseTime * timeMultiplier * costPerHr).toFixed(0);
+
+  const trainableParams = method === 'full' ? `${size}B (100%)` :
+    method === 'lora' ? `${(size * 0.002).toFixed(1)}B (~0.2%)` :
+    `${(size * 0.002).toFixed(1)}B (~0.2%, 4-bit base)`;
+
+  const canLocal = (method === 'qlora' && size <= 34) || (method === 'lora' && size <= 7);
+  const localNote = canLocal ?
+    '<span style="color:var(--green)">&#10003; Possible on consumer GPU (RTX 3090/4090)</span>' :
+    '<span style="color:var(--amber)">&#9888; Requires cloud GPU rental</span>';
+
+  costEstimate.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px">
+      <span style="color:var(--muted)">VRAM needed:</span> <span style="color:var(--text)">${vram} GB</span>
+      <span style="color:var(--muted)">GPU:</span> <span style="color:var(--text)">${gpu}</span>
+      <span style="color:var(--muted)">Trainable params:</span> <span style="color:var(--text)">${trainableParams}</span>
+      <span style="color:var(--muted)">Training time:</span> <span style="color:var(--text)">~${time} hours (3 epochs)</span>
+      <span style="color:var(--muted)">Cloud cost:</span> <span style="color:${parseInt(totalCost) > 100 ? 'var(--red)' : parseInt(totalCost) > 20 ? 'var(--amber)' : 'var(--green)'}">~$${totalCost} (at ~$${costPerHr}/hr)</span>
+      <span style="color:var(--muted)">Local training:</span> ${localNote}
+    </div>
+    <div style="margin-top:12px;padding:10px 14px;background:#08080e;border-radius:6px;border:1px solid #1a1a2e;font-size:11px;color:var(--muted);line-height:1.8">
+      ${method === 'qlora' ? '<span style="color:var(--green)">QLoRA</span> is the sweet spot for most people. Load the base model in 4-bit, train LoRA adapters in 16-bit. You get 90-95% of full fine-tune quality at 1/10th the cost.' :
+        method === 'lora' ? '<span style="color:var(--cyan)">LoRA</span> gives better quality than QLoRA since the base model stays at full precision. Worth it if you have the GPU budget and need top-tier results.' :
+        '<span style="color:var(--red)">Full fine-tuning</span> retrains every weight. Best quality but extremely expensive. Only justified for foundation model companies or when building a commercial model product.'}
+    </div>
+  `;
+}
+
+costModelSize.addEventListener('change', updateCostEstimate);
+costMethod.addEventListener('change', updateCostEstimate);
+costDataset.addEventListener('change', updateCostEstimate);
+updateCostEstimate();
+</script>
+</body>
+</html>
