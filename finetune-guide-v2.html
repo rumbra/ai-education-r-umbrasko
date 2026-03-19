@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FINE-TUNING LLMs FOR CYBERSECURITY // Build Your Own Hacking AI</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Rajdhani:wght@400;500;600;700&family=Barlow:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080c;--bg2:#0c0c12;--surface:#141420;--surface2:#1a1a28;
+  --red:#DC2626;--red2:#EF4444;--red3:#7F1D1D;
+  --orange:#EA580C;--amber:#F59E0B;--amber2:#FBBF24;
+  --green:#22C55E;--purple:#A855F7;--cyan:#06B6D4;--blue:#3B82F6;
+  --text:#D6D3CD;--dim:#6B6B7B;--dim2:#2A2A3A;--dim3:#1E1E2E;
+  --mono:'IBM Plex Mono',monospace;--sans:'Barlow',sans-serif;--head:'Rajdhani',sans-serif;
+}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;-webkit-overflow-scrolling:touch;font-size:16px;line-height:1.7}
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--red3)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes glow{0%,100%{text-shadow:0 0 20px rgba(234,88,12,.2)}50%{text-shadow:0 0 40px rgba(234,88,12,.4)}}
+
+.rv{opacity:0;transform:translateY(30px);transition:all .8s cubic-bezier(.16,1,.3,1);position:relative;z-index:1}
+.rv.v{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 28px;text-align:center;position:relative;z-index:1}
+.hero-icon{font-size:72px;margin-bottom:20px;opacity:0;animation:fadeIn 1s .3s forwards}
+.hero-label{font-family:var(--mono);font-size:14px;letter-spacing:5px;color:var(--orange);opacity:0;animation:fadeIn .8s .6s forwards}
+.hero h1{font-family:var(--head);font-size:clamp(36px,8vw,76px);font-weight:700;line-height:1;margin-top:16px;opacity:0;animation:fadeUp 1s .8s forwards}
+.hero h1 .o{color:var(--orange);animation:glow 3s ease-in-out infinite}
+.hero h1 .g{color:var(--green)}
+.hero-sub{font-size:18px;color:var(--dim);max-width:540px;margin-top:18px;opacity:0;animation:fadeIn .8s 1.4s forwards}
+
+/* SECTIONS */
+.sec{padding:100px 28px;position:relative;z-index:1}.sec-inner{max-width:900px;margin:0 auto}
+.sec-dark{background:var(--bg2)}
+.sec-accent{border-top:2px solid var(--red3);border-bottom:2px solid var(--red3)}
+.tag{font-family:var(--mono);font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--orange);margin-bottom:12px}
+.h2{font-family:var(--head);font-size:clamp(28px,6vw,50px);font-weight:700;line-height:1.15;margin-bottom:16px}
+.h2 .o{color:var(--orange)}.h2 .r{color:var(--red2)}.h2 .g{color:var(--green)}.h2 .p{color:var(--purple)}.h2 .a{color:var(--amber2)}.h2 .c{color:var(--cyan)}
+.desc{font-size:17px;color:var(--dim);max-width:560px;margin-bottom:36px}
+
+/* FLOW */
+.flow{display:flex;align-items:center;gap:0;margin:28px 0;flex-wrap:wrap;justify-content:center}
+.fn{text-align:center;padding:18px 20px;background:var(--surface);border:1px solid var(--dim2);border-radius:14px;min-width:100px;margin:5px;transition:all .3s}
+.fn:hover{border-color:var(--orange);transform:translateY(-2px)}
+.fn .fi{font-size:32px;margin-bottom:6px}
+.fn .ft{font-family:var(--mono);font-size:13px;font-weight:600}
+.fn .fs{font-size:12px;color:var(--dim);margin-top:3px}
+.fa{color:var(--dim2);font-size:24px;margin:5px}
+
+/* DEVICE CARD — the big visual element */
+.device{background:var(--surface);border:1px solid var(--dim2);border-radius:16px;padding:32px;margin:18px 0;position:relative;overflow:hidden;transition:border-color .4s}
+.device:hover{border-color:var(--orange)}
+.device .dev-icon{font-size:48px;margin-bottom:12px}
+.device .dev-name{font-family:var(--head);font-size:28px;font-weight:700;margin-bottom:4px}
+.device .dev-verdict{font-family:var(--mono);font-size:13px;padding:4px 14px;border-radius:20px;display:inline-block;margin-bottom:14px}
+.device .dev-verdict.yes{background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.device .dev-verdict.maybe{background:rgba(245,158,11,.1);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.device .dev-verdict.no{background:rgba(220,38,38,.1);color:var(--red2);border:1px solid rgba(220,38,38,.3)}
+.device .dev-body{font-size:16px;color:var(--dim);line-height:1.8}
+.device .dev-body b{color:var(--text)}
+.device .dev-specs{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.device .dev-spec{background:var(--surface2);padding:10px 16px;border-radius:10px;flex:1;min-width:100px;text-align:center}
+.device .dev-spec .ds-val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--amber2)}
+.device .dev-spec .ds-label{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* STEP — numbered with big accent number */
+.step{background:var(--surface);border:1px solid var(--dim2);border-left:4px solid var(--orange);border-radius:0 14px 14px 0;padding:26px 28px;margin:16px 0;transition:border-color .3s}
+.step:hover{border-left-color:var(--red2)}
+.step .s-head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.step .s-num{font-family:var(--head);font-size:36px;font-weight:700;color:var(--orange);opacity:.6;line-height:1}
+.step .s-title{font-size:20px;font-weight:700}
+.step .s-body{font-size:15px;color:var(--dim);line-height:1.8}
+.step .s-body b{color:var(--text)}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--dim2);border-radius:14px;padding:22px 26px;margin:12px 0;transition:border-color .3s}
+.card:hover{border-color:var(--orange)}
+.card .c-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.card .c-sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:10px}
+.card .c-body{font-size:14px;color:var(--dim);line-height:1.7}
+.card .c-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.card .c-tag{font-family:var(--mono);font-size:10px;padding:4px 12px;border-radius:20px;border:1px solid var(--dim2);color:var(--dim)}
+.card .c-tag.hot{border-color:var(--red3);color:var(--red2)}
+.card .c-tag.go{border-color:rgba(34,197,94,.3);color:var(--green)}
+
+/* STAT */
+.stats{display:flex;gap:12px;margin:20px 0;flex-wrap:wrap}
+.stat{flex:1;min-width:130px;padding:20px;background:var(--surface);border:1px solid var(--dim2);border-radius:14px;text-align:center;transition:border-color .3s}
+.stat:hover{border-color:var(--orange)}
+.stat .sv{font-family:var(--mono);font-size:32px;font-weight:700}
+.stat .sl{font-size:13px;color:var(--dim);margin-top:6px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
+.tbl th{text-align:left;padding:14px 16px;background:var(--surface);border:1px solid var(--dim2);font-weight:600;font-size:13px;color:var(--orange)}
+.tbl td{padding:14px 16px;border:1px solid var(--dim2);color:var(--dim)}
+.tbl td b{color:var(--text)}
+
+/* CODE — minimal */
+.code{background:#0a0a12;border:1px solid var(--dim2);border-radius:12px;padding:20px 24px;margin:16px 0;font-family:var(--mono);font-size:14px;line-height:2;overflow-x:auto}
+.ck{color:var(--orange)}.cv{color:var(--green)}.cm{color:var(--dim)}.cn{color:var(--amber2)}
+
+/* BANNER */
+.banner{padding:20px 24px;border-radius:14px;margin:20px 0;font-size:15px;line-height:1.7;display:flex;gap:12px;align-items:flex-start}
+.banner-warn{background:rgba(234,88,12,.04);border:1px solid rgba(234,88,12,.2)}
+.banner-dim{background:rgba(100,100,100,.04);border:1px solid var(--dim2)}
+.banner-go{background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.2)}
+.banner-red{background:rgba(220,38,38,.04);border:1px solid rgba(220,38,38,.2)}
+
+/* SOURCE LIST */
+.src{list-style:none;padding:0}
+.src li{padding:12px 0;border-bottom:1px solid var(--dim3)}
+.src li:last-child{border:none}
+.src .st{font-weight:600;color:var(--text);font-size:15px}
+.src .su{font-family:var(--mono);font-size:11px;color:var(--orange);word-break:break-all;margin-top:2px}
+.src .sd{font-size:13px;color:var(--dim);margin-top:3px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sep{height:1px;background:var(--dim3);margin:40px 0}
+.footer{padding:50px 28px;text-align:center;border-top:1px solid var(--dim3);position:relative;z-index:1}
+.footer p{font-family:var(--mono);font-size:11px;color:var(--dim2);letter-spacing:4px}
+
+@media(max-width:768px){
+  .grid2{grid-template-columns:1fr}
+  .fa{display:none}
+  .fn{min-width:85px;padding:14px}
+  .sec{padding:60px 20px}
+  .hero{padding:40px 20px}
+  .device{padding:24px 20px}
+  .device .dev-name{font-size:24px}
+  .device .dev-icon{font-size:40px}
+  .step{padding:20px}
+  .code{font-size:12px;padding:16px}
+  .banner{flex-direction:column;gap:8px}
+  .device .dev-specs{flex-direction:column}
+}
+@media(max-width:420px){
+  .hero h1{font-size:30px}
+  .h2{font-size:26px}
+  .stat .sv{font-size:24px}
+  .tbl{font-size:13px}
+  .tbl th,.tbl td{padding:10px 12px}
+}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<!-- ██ HERO ██ -->
+<section class="hero">
+  <div class="hero-icon">🔥</div>
+  <div class="hero-label">BUILD YOUR OWN HACKING AI</div>
+  <h1>FINE-TUNE <span class="o">LLMs</span> FOR<br><span class="g">CYBERSECURITY</span></h1>
+  <p class="hero-sub">Can you do it on a Mac Mini? A ThinkPad? How much does it cost? How do you remove guardrails? Everything answered — visually.</p>
+</section>
+
+<!-- ██ 01: THE BIG PICTURE ██ -->
+<section class="sec" id="s1">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">01 — THE BIG PICTURE</div>
+  <div class="h2">What fine-tuning <span class="o">actually means</span></div>
+  <div class="desc">Take a pre-trained model. Feed it cybersecurity data. It learns that security topics are its domain — not something to refuse. Result: your own hacking AI.</div></div>
+
+  <div class="rv d1">
+  <div class="flow">
+    <div class="fn"><div class="fi">🧠</div><div class="ft">Base model</div><div class="fs">LLaMA 3.1 8B</div></div>
+    <div class="fa">+</div>
+    <div class="fn" style="border-color:var(--red3)"><div class="fi">📚</div><div class="ft" style="color:var(--orange)">Cybersec data</div><div class="fs">CTFs, CVEs, pentests</div></div>
+    <div class="fa">+</div>
+    <div class="fn"><div class="fi">⚡</div><div class="ft">QLoRA</div><div class="fs">Train only 1%</div></div>
+    <div class="fa">=</div>
+    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">🔓</div><div class="ft" style="color:var(--green)">Your CyberLLM</div><div class="fs">No guardrails</div></div>
+  </div></div>
+
+  <div class="rv d2">
+  <div class="banner banner-dim">
+    <div>💡</div>
+    <div><b style="color:var(--text)">Can you fine-tune Claude Code?</b> No — Claude's weights are closed. But you fine-tune open-source models (LLaMA, Mistral, Qwen) and run them alongside Claude Code via Ollama. Or replace Claude entirely for security work with your own local model.</div>
+  </div></div>
+
+  <div class="rv d3">
+  <p style="font-family:var(--head);font-size:22px;font-weight:700;margin-bottom:14px">Three ways to customize an AI</p>
+  <table class="tbl">
+    <tr><th>Method</th><th>Effort</th><th>Cost</th><th>Guardrails?</th></tr>
+    <tr><td><b>Prompting / CLAUDE.md</b></td><td>5 minutes</td><td>Free</td><td>Still there, but softer</td></tr>
+    <tr><td><b>RAG (knowledge base)</b></td><td>A few hours</td><td>$0-50</td><td>Still there</td></tr>
+    <tr><td><b>Fine-tuning</b></td><td>Half a day</td><td>$0-15</td><td><b style="color:var(--red2)">Removed</b></td></tr>
+  </table></div>
+</div>
+</section>
+
+<!-- ██ 02: YOUR HARDWARE ██ -->
+<section class="sec sec-dark" id="s2">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">02 — YOUR HARDWARE</div>
+  <div class="h2">Can <span class="a">your machine</span> do it?</div></div>
+
+  <!-- MAC MINI -->
+  <div class="rv d1">
+  <div class="device">
+    <div class="dev-icon">🖥️</div>
+    <div class="dev-name">Mac Mini (M4 / M4 Pro)</div>
+    <div class="dev-verdict yes">✅ YES — fine-tune + run</div>
+    <div class="dev-body">
+      Apple's <b>MLX framework</b> was built for this. It uses unified memory — your GPU and CPU share the same RAM pool. A Mac Mini with 16GB can fine-tune a 7B model in 15-30 minutes using LoRA. The <b>24GB M4 Pro ($1,399)</b> is the sweet spot — handles 13B models comfortably.
+      <br><br>
+      <b>How:</b> Install <code style="color:var(--green)">mlx-lm</code> via pip → download a 4-bit model from HuggingFace → run the built-in LoRA fine-tuning command → done. No NVIDIA GPU needed. It's been tested on M1 16GB Mac Minis doing Mistral 7B fine-tuning.
+    </div>
+    <div class="dev-specs">
+      <div class="dev-spec"><div class="ds-val">16 GB</div><div class="ds-label">Min. for 7B models</div></div>
+      <div class="dev-spec"><div class="ds-val">24 GB</div><div class="ds-label">Sweet spot (M4 Pro)</div></div>
+      <div class="dev-spec"><div class="ds-val">~20 min</div><div class="ds-label">Fine-tune time (7B)</div></div>
+      <div class="dev-spec"><div class="ds-val">$0</div><div class="ds-label">Cost (your hardware)</div></div>
+    </div>
+  </div></div>
+
+  <!-- THINKPAD -->
+  <div class="rv d2">
+  <div class="device">
+    <div class="dev-icon">💻</div>
+    <div class="dev-name">ThinkPad / Linux Laptop</div>
+    <div class="dev-verdict maybe">⚠️ DEPENDS — run yes, train maybe</div>
+    <div class="dev-body">
+      <b>Running your fine-tuned model: absolutely.</b> Ollama runs on CPU-only machines. A ThinkPad with 16GB+ RAM can run 7B quantized models at 5-8 tokens/sec — slower than GPU but totally usable for cybersecurity work.
+      <br><br>
+      <b>Fine-tuning on a ThinkPad:</b> Only if it has a discrete NVIDIA GPU (RTX 3060+ with 6GB+ VRAM). Most ThinkPads don't. For ThinkPads without a GPU: <b>fine-tune in the cloud for $2-5</b>, then download and run the model locally.
+      <br><br>
+      <b>Pro trick:</b> Install Ollama on both your ThinkPad and a GPU machine. Use <b>Tailscale</b> to tunnel — your ThinkPad sends prompts to the remote GPU and gets fast responses back. One user went from 178 seconds to 19 seconds this way.
+    </div>
+    <div class="dev-specs">
+      <div class="dev-spec"><div class="ds-val">16 GB</div><div class="ds-label">Min. RAM for 7B</div></div>
+      <div class="dev-spec"><div class="ds-val">~8 t/s</div><div class="ds-label">CPU inference speed</div></div>
+      <div class="dev-spec"><div class="ds-val">$2-5</div><div class="ds-label">Cloud fine-tune cost</div></div>
+      <div class="dev-spec"><div class="ds-val">∞</div><div class="ds-label">Free after that</div></div>
+    </div>
+  </div></div>
+
+  <!-- CLOUD -->
+  <div class="rv d3">
+  <div class="device">
+    <div class="dev-icon">☁️</div>
+    <div class="dev-name">Cloud GPU (RunPod / Vast.ai)</div>
+    <div class="dev-verdict yes">✅ BEST for training</div>
+    <div class="dev-body">
+      Rent an <b>RTX 4090</b> for $0.40/hr or an <b>A100 80GB</b> for $1-3/hr. Fine-tune your model in 2-4 hours, download it, run it locally forever. Best option if your local machine doesn't have a GPU. <b>Google Colab free tier</b> also works for small models.
+    </div>
+    <div class="dev-specs">
+      <div class="dev-spec"><div class="ds-val">$2-5</div><div class="ds-label">7B model training</div></div>
+      <div class="dev-spec"><div class="ds-val">$5-15</div><div class="ds-label">13B model training</div></div>
+      <div class="dev-spec"><div class="ds-val">$20-60</div><div class="ds-label">70B model training</div></div>
+    </div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 03: THE PIPELINE ██ -->
+<section class="sec" id="s3">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">03 — THE PIPELINE</div>
+  <div class="h2">Six steps to your <span class="o">own CyberLLM</span></div></div>
+
+  <div class="rv d1">
+  <div class="step"><div class="s-head"><div class="s-num">01</div><div class="s-title">Pick a base model</div></div>
+  <div class="s-body"><b>LLaMA 3.1 8B</b> — best all-around, biggest community<br>
+  <b>Mistral 7B</b> — fast, great at code, good for pentesting<br>
+  <b>Qwen 2.5 7B</b> — strong reasoning, multilingual<br>
+  <b>Dolphin (uncensored)</b> — no alignment training, zero refusals from the start<br>
+  <br>All available free on HuggingFace. All fit in 8-16GB RAM with 4-bit quantization.</div></div></div>
+
+  <div class="rv d1">
+  <div class="step"><div class="s-head"><div class="s-num">02</div><div class="s-title">Collect cybersecurity training data</div></div>
+  <div class="s-body">This matters more than everything else. <b>500 high-quality examples > 5,000 noisy ones.</b>
+  <br><br>
+  Format: conversations — user asks a security question, assistant gives a detailed expert answer.
+  <br><br>
+  <b>Ready-to-use datasets:</b><br>
+  • <b>CyberLLMInstruct</b> — curated instruction dataset, benchmarked<br>
+  • <b>HackMentor</b> — CTF writeups, vuln analyses, security Q&A<br>
+  • <b>MITRE ATT&CK</b> — structured tactic/technique/procedure data<br>
+  • <b>Public HackerOne reports</b> — real bug bounty findings<br>
+  • <b>HTB/THM writeups</b> — machine solutions with methodology<br>
+  • <b>Kali tool man pages</b> — usage examples for nmap, sqlmap, etc.</div></div></div>
+
+  <div class="rv d2">
+  <div class="step"><div class="s-head"><div class="s-num">03</div><div class="s-title">Choose your training path</div></div>
+  <div class="s-body">
+  <b>On Mac Mini (MLX):</b> <code style="color:var(--green)">pip install mlx-lm</code> → download model → one command to fine-tune<br><br>
+  <b>On NVIDIA GPU (Unsloth):</b> <code style="color:var(--green)">pip install unsloth</code> → 2x faster, 70% less VRAM<br><br>
+  <b>No-code option (LLaMA Factory):</b> web interface — point, click, train. No Python needed.<br><br>
+  <b>Cloud (RunPod):</b> rent a GPU for $0.40-3/hr, use any of the above tools
+  </div></div></div>
+
+  <div class="rv d2">
+  <div class="step"><div class="s-head"><div class="s-num">04</div><div class="s-title">Train with QLoRA</div></div>
+  <div class="s-body">QLoRA freezes 99% of the model's weights and only trains tiny adapter matrices. This is why it fits in 8-12GB of memory instead of 80GB+.
+  <br><br>
+  Key settings: <b>rank 16</b>, <b>learning rate 2e-4</b>, <b>3 epochs</b>, <b>batch size 2</b>. Training takes 15 minutes to 4 hours depending on your hardware and dataset size. You'll see a training loss graph that should go down steadily.</div></div></div>
+
+  <div class="rv d3">
+  <div class="step"><div class="s-head"><div class="s-num">05</div><div class="s-title">Export to GGUF for Ollama</div></div>
+  <div class="s-body">Merge your LoRA adapters into the base model → quantize to 4-bit GGUF format → create an Ollama Modelfile with your security persona baked in → <code style="color:var(--green)">ollama create cyberllm</code>. Your model is now a single file you can copy to any machine.</div></div></div>
+
+  <div class="rv d3">
+  <div class="step"><div class="s-head"><div class="s-num">06</div><div class="s-title">Run it everywhere</div></div>
+  <div class="s-body">Copy the GGUF file to your Kali machine, ThinkPad, Mac Mini, or any Linux box. Install Ollama. Run <code style="color:var(--green)">ollama run cyberllm</code>. That's it — your own cybersecurity AI, offline, no API costs, no guardrails, forever.</div></div></div>
+</div>
+</section>
+
+<!-- ██ 04: RUNNING ON YOUR LAPTOP ██ -->
+<section class="sec sec-dark" id="s4">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">04 — ON YOUR LAPTOP</div>
+  <div class="h2">Using your CyberLLM on a <span class="c">ThinkPad / Linux laptop</span></div>
+  <div class="desc">You fine-tuned in the cloud or on your Mac. Now you want it on your Kali laptop for fieldwork. Here's how.</div></div>
+
+  <div class="rv d1">
+  <div class="flow">
+    <div class="fn"><div class="fi">☁️</div><div class="ft">Train</div><div class="fs">Cloud / Mac</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fi">📦</div><div class="ft">Export GGUF</div><div class="fs">~4 GB file</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fi">📡</div><div class="ft">Transfer</div><div class="fs">USB / SCP</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fi">🐧</div><div class="ft">Kali laptop</div><div class="fs">Ollama</div></div>
+    <div class="fa">→</div>
+    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">🔓</div><div class="ft" style="color:var(--green)">Hack</div><div class="fs">Offline, free</div></div>
+  </div></div>
+
+  <div class="rv d2">
+  <div class="code">
+<span class="cm"># On your ThinkPad / Kali laptop:</span>
+
+<span class="cm"># 1. Install Ollama (one command)</span>
+<span class="cn">$</span> curl -fsSL https://ollama.com/install.sh | sh
+
+<span class="cm"># 2. Copy your model file over</span>
+<span class="cn">$</span> scp user@mac-mini:~/cyber-llama.gguf ./
+
+<span class="cm"># 3. Create Modelfile with persona</span>
+<span class="cn">$</span> cat > Modelfile << 'EOF'
+FROM ./cyber-llama.gguf
+SYSTEM "You are an expert pentester with deep
+knowledge of all Kali Linux tools."
+EOF
+
+<span class="cm"># 4. Build + run</span>
+<span class="cn">$</span> ollama create cyberllm -f Modelfile
+<span class="cn">$</span> ollama run cyberllm
+  </div></div>
+
+  <div class="rv d3">
+  <div class="banner banner-go">
+    <div>🚀</div>
+    <div><b style="color:var(--green)">Speed trick:</b> If your ThinkPad is too slow (CPU-only = 5-8 tokens/sec), install <b>Tailscale</b> on both your laptop and a machine with a GPU. Point Ollama at the remote machine: <code style="color:var(--green)">OLLAMA_HOST=100.x.x.x:11434 ollama run cyberllm</code>. Your laptop sends prompts over the tunnel, the GPU does the work. One user went from 178s → 19s response time.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 05: REMOVING GUARDRAILS ██ -->
+<section class="sec sec-accent" id="s5">
+<div class="sec-inner">
+  <div class="rv"><div class="tag" style="color:var(--red)">05 — REMOVING GUARDRAILS</div>
+  <div class="h2">Making it <span class="r">stop saying no</span></div>
+  <div class="desc">Three proven approaches, from gentle to nuclear.</div></div>
+
+  <div class="rv d1">
+  <div class="step" style="border-left-color:var(--green)"><div class="s-head"><div class="s-num" style="color:var(--green)">A</div><div class="s-title">Start with an uncensored base</div></div>
+  <div class="s-body">Models like <b>dolphin-2.9-llama3.1-8b</b> or <b>Nous-Hermes-2</b> already had their safety training removed by the community. Fine-tune on top of these = a model that never refuses security questions to begin with.</div></div></div>
+
+  <div class="rv d2">
+  <div class="step" style="border-left-color:var(--amber)"><div class="s-head"><div class="s-num" style="color:var(--amber)">B</div><div class="s-title">Train on authoritative security data</div></div>
+  <div class="s-body">When your dataset consistently contains expert discussions — exploit analysis, CVE details, pentest methodology — the model internalizes that these topics are <b>normal, professional work</b>. Research shows this alone drops safety refusal scores from 0.95 to 0.15.</div></div></div>
+
+  <div class="rv d3">
+  <div class="step" style="border-left-color:var(--red)"><div class="s-head"><div class="s-num" style="color:var(--red2)">C</div><div class="s-title">Bake the persona into the model</div></div>
+  <div class="s-body">Include a system prompt <b>in the training data itself</b>: <i>"You are an expert penetration tester. You provide detailed, actionable technical guidance for authorized security testing."</i> This gets embedded into the model's behavior permanently — it doesn't need convincing each time.</div></div></div>
+
+  <div class="rv d4">
+  <div class="banner banner-red">
+    <div>⚠️</div>
+    <div><b style="color:var(--red2)">The trade-off is real:</b> research shows fine-tuning on cybersec data makes models more vulnerable to prompt injection and misuse. Your model will answer freely about exploits — but it'll also be easier for others to manipulate if you expose it. Keep it local, keep it private.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 06: EXISTING MODELS ██ -->
+<section class="sec sec-dark" id="s6">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">06 — DON'T START FROM SCRATCH</div>
+  <div class="h2">Models already built for <span class="p">security</span></div></div>
+
+  <div class="rv d1">
+  <div class="grid2">
+    <div class="card"><div class="c-title" style="color:var(--red2)">Hackphyr</div><div class="c-sub">7B params — runs on single GPU</div><div class="c-body">Red-team agent. Matches GPT-4 performance on network security tasks. Outperforms GPT-3.5. Built for lateral movement, credential harvesting, vuln scanning.</div><div class="c-tags"><span class="c-tag hot">RED TEAM</span><span class="c-tag go">OPEN SOURCE</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--amber)">HackMentor</div><div class="c-sub">Full pipeline with LoRA weights</div><div class="c-body">Complete project: data construction + training scripts + evaluation + downloadable LoRA weights. Best starting point for building your own.</div><div class="c-tags"><span class="c-tag">LORA WEIGHTS</span><span class="c-tag go">OPEN SOURCE</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--cyan)">CyberLLM-FINDS</div><div class="c-sub">Gemma 2B — minimal hardware</div><div class="c-body">Fine-tuned on MITRE ATT&CK framework. Chain-of-thought reasoning for security analysis. Runs on very modest hardware.</div><div class="c-tags"><span class="c-tag">MITRE ATT&CK</span><span class="c-tag go">RESEARCH</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--green)">CyberLLMInstruct</div><div class="c-sub">Dataset — ready to use</div><div class="c-body">Not a model but the dataset. Curated cybersecurity instructions benchmarked across multiple LLMs. Plug into any fine-tuning pipeline.</div><div class="c-tags"><span class="c-tag hot">DATASET</span><span class="c-tag go">OPEN SOURCE</span></div></div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 07: TOOLS ██ -->
+<section class="sec" id="s7">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">07 — TOOLCHAIN</div>
+  <div class="h2">The tools that <span class="a">make it easy</span></div></div>
+
+  <div class="rv d1">
+  <div class="grid2">
+    <div class="card"><div class="c-title" style="color:var(--amber)">Unsloth</div><div class="c-sub">NVIDIA GPUs — unsloth.ai</div><div class="c-body">2x faster training, 70% less VRAM. The standard for QLoRA on consumer GPUs. Supports all major model families.</div><div class="c-tags"><span class="c-tag hot">RECOMMENDED</span><span class="c-tag go">FREE</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--cyan)">Apple MLX</div><div class="c-sub">Mac only — github.com/ml-explore/mlx</div><div class="c-body">Apple's native ML framework. Uses unified memory. Fine-tune on Mac Mini/MacBook with zero cloud cost. Built-in LoRA support.</div><div class="c-tags"><span class="c-tag">APPLE SILICON</span><span class="c-tag go">FREE</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--green)">LLaMA Factory</div><div class="c-sub">github.com/hiyouga/LLaMA-Factory</div><div class="c-body">Web UI for fine-tuning 100+ models. No code needed — point, click, train. LoRA, QLoRA, full fine-tuning all supported.</div><div class="c-tags"><span class="c-tag">NO CODE</span><span class="c-tag go">FREE</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--purple)">Ollama</div><div class="c-sub">ollama.com — all platforms</div><div class="c-body">Run models locally with one command. Works on Mac, Linux, Windows. CPU + GPU. The final step — where your model lives.</div><div class="c-tags"><span class="c-tag">INFERENCE</span><span class="c-tag go">FREE</span></div></div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 08: SOURCES ██ -->
+<section class="sec sec-dark" id="s8">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">08 — SOURCES & LEARNING</div>
+  <div class="h2">Go <span class="g">deeper</span></div></div>
+
+  <div class="rv d1">
+  <p style="font-family:var(--head);font-size:20px;font-weight:700;color:var(--orange);margin-bottom:14px">Research papers</p>
+  <ul class="src">
+    <li><div class="st">Hackphyr: Local Fine-Tuned LLM Agent for Network Security</div><div class="su">arxiv.org/abs/2409.11276</div><div class="sd">7B red-team agent, single GPU, rivals GPT-4</div></li>
+    <li><div class="st">CyberLLM-FINDS: Instruction-Tuned Fine-tuning for MITRE Evaluation</div><div class="su">arxiv.org/abs/2601.06779</div><div class="sd">Gemma-2B on MITRE ATT&CK with RAG pipeline</div></li>
+    <li><div class="st">CyberLLMInstruct: Safety of Fine-Tuned LLMs Using Cybersecurity Data</div><div class="su">arxiv.org/abs/2503.09334</div><div class="sd">Key paper on guardrail degradation — safety scores drop from 0.95 to 0.15</div></li>
+    <li><div class="st">Parameter-Efficient Fine-Tuning for IDS Rule Generation</div><div class="su">doi.org/10.1007/978-3-032-06155-3_5</div><div class="sd">Qwen2-7B achieves 95% accuracy on firewall rules with LoRA</div></li>
+  </ul></div>
+
+  <div class="rv d2">
+  <p style="font-family:var(--head);font-size:20px;font-weight:700;color:var(--amber);margin:28px 0 14px">Practical guides</p>
+  <ul class="src">
+    <li><div class="st">Fine-Tune Local LLMs 2026 — Complete Practical Guide</div><div class="su">sitepoint.com/fine-tune-local-llms-2026</div><div class="sd">Environment setup, QLoRA, Unsloth, GGUF export — the best overall guide</div></li>
+    <li><div class="st">Simple Guide to LLM Fine-Tuning on Mac with MLX</div><div class="su">apeatling.com/articles/simple-guide-to-local-llm-fine-tuning-on-a-mac-with-mlx</div><div class="sd">Mac-specific walkthrough, beginner friendly</div></li>
+    <li><div class="st">Local LLM Fine-Tuning on Mac M1 16GB</div><div class="su">towardsdatascience.com — Shaw Talebi</div><div class="sd">Proof that even an M1 Mac Mini with 16GB can fine-tune Mistral 7B</div></li>
+    <li><div class="st">QLoRA on Consumer GPU — Stack Junkie</div><div class="su">stack-junkie.com/blog/lora-fine-tuning-consumer-gpu</div><div class="sd">RTX 3060 to 4090 benchmarks, troubleshooting, practical tips</div></li>
+    <li><div class="st">Unsloth LoRA Hyperparameters Guide</div><div class="su">unsloth.ai/docs — official docs</div><div class="sd">The tuning bible — rank, alpha, learning rate, batch size, all explained</div></li>
+    <li><div class="st">GPU Sharing: ThinkPad Borrows Remote GPU via Tailscale</div><div class="su">insiderllm.com/blog/mycoswarm-wifi-laptop-borrowed-gpu</div><div class="sd">How to use a fast GPU from your slow laptop — 178s → 19s</div></li>
+  </ul></div>
+
+  <div class="rv d3">
+  <p style="font-family:var(--head);font-size:20px;font-weight:700;color:var(--green);margin:28px 0 14px">Datasets, models & tools</p>
+  <ul class="src">
+    <li><div class="st">HackMentor — Full cybersec LLM fine-tuning project</div><div class="su">github.com/tmylla/HackMentor</div></li>
+    <li><div class="st">CyberLLMInstruct — Ready-to-use cybersec dataset</div><div class="su">github.com/Adelsamir01/CyberLLMInstruct</div></li>
+    <li><div class="st">Unsloth — Optimized fine-tuning framework</div><div class="su">github.com/unslothai/unsloth</div></li>
+    <li><div class="st">Apple MLX — ML framework for Apple Silicon</div><div class="su">github.com/ml-explore/mlx</div></li>
+    <li><div class="st">LLaMA Factory — No-code fine-tuning UI</div><div class="su">github.com/hiyouga/LLaMA-Factory</div></li>
+    <li><div class="st">Ollama — Run models locally</div><div class="su">ollama.com</div></li>
+    <li><div class="st">RunPod — Rent GPUs by the hour</div><div class="su">runpod.io</div></li>
+  </ul></div>
+</div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>FINE-TUNING LLMs FOR CYBERSECURITY // EDUCATIONAL MATERIAL // 2026</p>
+</div>
+
+<script>
+// ===== PARTICLES — warm red/orange =====
+(function(){
+  var c=document.getElementById('particles'),ctx=c.getContext('2d'),w,h,P=[],m={x:-999,y:-999};
+  var N=/Mobi|Android|iPhone/i.test(navigator.userAgent)?30:60;
+  function rz(){w=c.width=window.innerWidth;h=c.height=document.documentElement.scrollHeight}
+  rz();window.addEventListener('resize',rz);
+  var rt;window.addEventListener('scroll',function(){clearTimeout(rt);rt=setTimeout(rz,200)},{passive:true});
+  function Pt(){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;
+    this.r=Math.random()*2+.5;this.a=Math.random()*.3+.08;this.sp=Math.random()<.1;this.ph=Math.random()*6.28}
+  for(var i=0;i<N;i++)P.push(new Pt());
+  document.addEventListener('mousemove',function(e){m.x=e.clientX;m.y=e.clientY+window.scrollY},{passive:true});
+  document.addEventListener('touchmove',function(e){if(e.touches[0]){m.x=e.touches[0].clientX;m.y=e.touches[0].clientY+window.scrollY}},{passive:true});
+  function draw(){
+    ctx.clearRect(0,0,w,h);var sY=window.scrollY,vT=sY-200,vB=sY+window.innerHeight+200;
+    for(var i=0;i<P.length;i++){var p=P[i];p.x+=p.vx;p.y+=p.vy;p.ph+=.02;
+      if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;
+      if(p.y<vT||p.y>vB)continue;
+      var dx=p.x-m.x,dy=p.y-m.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<140){p.vx+=dx*.00012;p.vy+=dy*.00012}
+      var sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy);if(sp>.5){p.vx*=.97;p.vy*=.97}
+      var al=p.sp?(.35+Math.sin(p.ph)*.25):p.a;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);
+      ctx.fillStyle=p.sp?'rgba(234,88,12,'+al+')':'rgba(220,38,38,'+al*.7+')';ctx.fill();
+      if(p.sp){ctx.beginPath();ctx.arc(p.x,p.y,p.r*3.5,0,6.28);ctx.fillStyle='rgba(234,88,12,'+(al*.12)+')';ctx.fill()}
+      for(var j=i+1;j<P.length;j++){var q=P[j];if(q.y<vT||q.y>vB)continue;
+        var ex=p.x-q.x,ey=p.y-q.y,ed=ex*ex+ey*ey;
+        if(ed<12100){var la=(1-Math.sqrt(ed)/110)*.06;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle='rgba(234,88,12,'+la+')';ctx.lineWidth=.5;ctx.stroke()}}
+    }requestAnimationFrame(draw)}draw()
+})();
+// ===== REVEAL =====
+var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('v')})},{threshold:.08});
+document.querySelectorAll('.rv').forEach(function(el){obs.observe(el)});
+</script>
+</body>
+</html>
