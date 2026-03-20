@@ -34,7 +34,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
 
 /* HERO */
 .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 28px;text-align:center;position:relative;z-index:1}
-.hero-icon{font-size:72px;margin-bottom:20px;opacity:0;animation:fadeIn 1s .3s forwards}
+.hero-icon{margin-bottom:20px;opacity:0;animation:fadeIn 1s .3s forwards}
+.hero-icon svg{width:80px;height:80px;filter:drop-shadow(0 0 20px rgba(234,88,12,.4))}
 .hero-label{font-family:var(--mono);font-size:14px;letter-spacing:5px;color:var(--orange);opacity:0;animation:fadeIn .8s .6s forwards}
 .hero h1{font-family:var(--head);font-size:clamp(36px,8vw,76px);font-weight:700;line-height:1;margin-top:16px;opacity:0;animation:fadeUp 1s .8s forwards}
 .hero h1 .o{color:var(--orange);animation:glow 3s ease-in-out infinite}
@@ -160,7 +161,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
 
 <!-- ██ HERO ██ -->
 <section class="hero">
-  <div class="hero-icon">🔥</div>
+  <div class="hero-icon"><svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Brain/circuit icon -->
+    <circle cx="40" cy="40" r="28" stroke="#EA580C" stroke-width="1.5" opacity=".3"/>
+    <circle cx="40" cy="40" r="18" stroke="#EA580C" stroke-width="1.5" opacity=".5"/>
+    <!-- Center node -->
+    <circle cx="40" cy="40" r="5" fill="#EA580C" opacity=".9"/>
+    <!-- Orbital nodes -->
+    <circle cx="40" cy="12" r="3" fill="#EF4444"/><line x1="40" y1="22" x2="40" y2="15" stroke="#EF4444" stroke-width="1.2" opacity=".6"/>
+    <circle cx="40" cy="68" r="3" fill="#EF4444"/><line x1="40" y1="58" x2="40" y2="65" stroke="#EF4444" stroke-width="1.2" opacity=".6"/>
+    <circle cx="12" cy="40" r="3" fill="#EF4444"/><line x1="22" y1="40" x2="15" y2="40" stroke="#EF4444" stroke-width="1.2" opacity=".6"/>
+    <circle cx="68" cy="40" r="3" fill="#EF4444"/><line x1="58" y1="40" x2="65" y2="40" stroke="#EF4444" stroke-width="1.2" opacity=".6"/>
+    <!-- Diagonal nodes -->
+    <circle cx="20" cy="20" r="2.5" fill="#F59E0B" opacity=".8"/><line x1="27" y1="27" x2="22" y2="22" stroke="#F59E0B" stroke-width="1" opacity=".4"/>
+    <circle cx="60" cy="20" r="2.5" fill="#F59E0B" opacity=".8"/><line x1="53" y1="27" x2="58" y2="22" stroke="#F59E0B" stroke-width="1" opacity=".4"/>
+    <circle cx="20" cy="60" r="2.5" fill="#F59E0B" opacity=".8"/><line x1="27" y1="53" x2="22" y2="58" stroke="#F59E0B" stroke-width="1" opacity=".4"/>
+    <circle cx="60" cy="60" r="2.5" fill="#F59E0B" opacity=".8"/><line x1="53" y1="53" x2="58" y2="58" stroke="#F59E0B" stroke-width="1" opacity=".4"/>
+    <!-- Inner arcs for brain feel -->
+    <path d="M32 30 Q40 24 48 30" stroke="#EA580C" stroke-width="1.2" fill="none" opacity=".5"/>
+    <path d="M32 50 Q40 56 48 50" stroke="#EA580C" stroke-width="1.2" fill="none" opacity=".5"/>
+  </svg></div>
   <div class="hero-label">BUILD YOUR OWN HACKING AI</div>
   <h1>FINE-TUNE <span class="o">LLMs</span> FOR<br><span class="g">CYBERSECURITY</span></h1>
   <p class="hero-sub">Can you do it on a Mac Mini? A ThinkPad? How much does it cost? How do you remove guardrails? Everything answered — visually.</p>
