@@ -545,21 +545,21 @@ for(var i=0;i<columns;i++)drops[i]=Math.random()*-100;
 }
 resize();window.addEventListener('resize',resize);
 function draw(){
-ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,w,h);
+ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fillRect(0,0,w,h);
 ctx.font=fontSize+'px monospace';
 for(var i=0;i<columns;i++){
 var ch=chars[Math.floor(Math.random()*chars.length)];
 var x=i*fontSize,y=drops[i]*fontSize;
-ctx.shadowColor='rgba(255,0,0,0.8)';ctx.shadowBlur=8;
-ctx.fillStyle='rgba(255,60,60,'+(0.9+Math.random()*0.1)+')';
+ctx.shadowColor='rgba(255,0,0,0.4)';ctx.shadowBlur=4;
+ctx.fillStyle='rgba(255,60,60,'+(0.3+Math.random()*0.1)+')';
 ctx.fillText(ch,x,y);
 ctx.shadowBlur=0;
 for(var t=1;t<6;t++){var ty=y-t*fontSize;if(ty<0)continue;
-var ta=0.4-t*0.07;if(ta<=0)continue;
+var ta=0.18-t*0.03;if(ta<=0)continue;
 ctx.fillStyle='rgba(220,38,38,'+ta+')';
 ctx.fillText(chars[Math.floor(Math.random()*chars.length)],x,ty);}
 if(y>h&&Math.random()>0.975)drops[i]=0;
-drops[i]+=0.5+Math.random()*0.5;
+drops[i]+=0.15+Math.random()*0.15;
 }
 requestAnimationFrame(draw);
 }
