@@ -197,7 +197,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
   </svg></div>
   <div class="hero-label">BUILD YOUR OWN HACKING AI</div>
   <h1>FINE-TUNE <span class="o">LLMs</span> FOR<br><span class="r">CYBERSECURITY</span></h1>
-  <p class="hero-sub">Can you do it on a Mac Mini? A ThinkPad? How much does it cost? How do you remove guardrails? Everything answered — visually.</p>
+  <p class="hero-sub">How to build an AI that actually executes Kali tools from your terminal — like Claude Code, but for hacking. Fine-tune it, deploy it, control it.</p>
 </section>
 
 <!-- ██ 01: THE BIG PICTURE ██ -->
@@ -205,7 +205,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
 <div class="sec-inner">
   <div class="rv"><div class="tag">01 — THE BIG PICTURE</div>
   <div class="h2">What fine-tuning <span class="o">actually means</span></div>
-  <div class="desc">Take a pre-trained model. Feed it cybersecurity data. It learns that security topics are its domain — not something to refuse. Result: your own hacking AI.</div></div>
+  <div class="desc">Take a pre-trained model. Feed it cybersecurity data. It learns that security topics are its domain — not something to refuse. Result: a terminal agent that thinks like a pentester.</div></div>
 
   <div class="rv d1">
   <div class="flow">
@@ -215,13 +215,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
     <div class="fa">+</div>
     <div class="fn"><div class="fi">⚡</div><div class="ft">QLoRA</div><div class="fs">Train only 1%</div></div>
     <div class="fa">=</div>
-    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">🔓</div><div class="ft" style="color:var(--green)">Your CyberLLM</div><div class="fs">No guardrails</div></div>
+    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">🔓</div><div class="ft" style="color:var(--green)">Your CyberLLM</div><div class="fs">Terminal agent</div></div>
   </div></div>
 
   <div class="rv d2">
   <div class="banner banner-dim">
     <div>💡</div>
-    <div><b style="color:var(--text)">Can you fine-tune Claude Code?</b> No — Claude's weights are closed. But you fine-tune open-source models (LLaMA, Mistral, Qwen) and run them alongside Claude Code via Ollama. Or replace Claude entirely for security work with your own local model.</div>
+    <div><b style="color:var(--text)">The goal: build something like Claude Code, but for hacking.</b> Claude Code is a terminal agent that reads code, runs commands, and reasons about results. We are building the same thing — but for pentesting. Fine-tune an open-source model on security data, wrap it in an agent script, and point it at your Kali toolset.</div>
   </div></div>
 
   <div class="rv d3">
@@ -235,66 +235,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
 </div>
 </section>
 
-<!-- ██ 02: YOUR HARDWARE ██ -->
+<!-- ██ 02: WHERE TO TRAIN ██ -->
 <section class="sec sec-dark" id="s2">
 <div class="sec-inner">
-  <div class="rv"><div class="tag">02 — YOUR HARDWARE</div>
-  <div class="h2">Can <span class="a">your machine</span> do it?</div></div>
+  <div class="rv"><div class="tag">02 — WHERE TO TRAIN</div>
+  <div class="h2">Where to <span class="r">train</span> your model</div>
+  <div class="desc">Two options: train locally for free, or rent a cloud GPU for speed. Either way, you run the final model locally.</div></div>
 
-  <!-- MAC MINI -->
   <div class="rv d1">
-  <div class="device">
-    <div class="dev-icon">🖥️</div>
-    <div class="dev-name">Mac Mini (M4 / M4 Pro)</div>
-    <div class="dev-verdict yes">✅ YES — fine-tune + run</div>
-    <div class="dev-body">
-      Apple's <b>MLX framework</b> was built for this. It uses unified memory — your GPU and CPU share the same RAM pool. A Mac Mini with 16GB can fine-tune a 7B model in 15-30 minutes using LoRA. The <b>24GB M4 Pro ($1,399)</b> is the sweet spot — handles 13B models comfortably.
-      <br><br>
-      <b>How:</b> Install <code style="color:var(--green)">mlx-lm</code> via pip → download a 4-bit model from HuggingFace → run the built-in LoRA fine-tuning command → done. No NVIDIA GPU needed. It's been tested on M1 16GB Mac Minis doing Mistral 7B fine-tuning.
-    </div>
-    <div class="dev-specs">
-      <div class="dev-spec"><div class="ds-val">16 GB</div><div class="ds-label">Min. for 7B models</div></div>
-      <div class="dev-spec"><div class="ds-val">24 GB</div><div class="ds-label">Sweet spot (M4 Pro)</div></div>
-      <div class="dev-spec"><div class="ds-val">~20 min</div><div class="ds-label">Fine-tune time (7B)</div></div>
-      <div class="dev-spec"><div class="ds-val">$0</div><div class="ds-label">Cost (your hardware)</div></div>
-    </div>
-  </div></div>
+  <table class="tbl">
+    <tr><th></th><th>Local (Mac M4 Mini)</th><th>Cloud GPU (RunPod/Vast.ai)</th></tr>
+    <tr><td><b>Cost</b></td><td>$0 (your hardware)</td><td>$2-15 per session</td></tr>
+    <tr><td><b>Time (7B model)</b></td><td>2-6 hours with QLoRA</td><td>15-30 minutes</td></tr>
+    <tr><td><b>Time (13B model)</b></td><td>8-12+ hours, needs 24GB+</td><td>1-2 hours</td></tr>
+    <tr><td><b>Privacy</b></td><td><b style="color:var(--green)">Data never leaves your machine</b></td><td>Data on rented server</td></tr>
+    <tr><td><b>Setup</b></td><td>Install mlx-lm, one command</td><td>SSH into GPU, install deps</td></tr>
+    <tr><td><b>Best for</b></td><td>Small models, privacy, learning</td><td>Larger models, speed</td></tr>
+  </table></div>
 
-  <!-- THINKPAD -->
   <div class="rv d2">
-  <div class="device">
-    <div class="dev-icon">💻</div>
-    <div class="dev-name">ThinkPad / Linux Laptop</div>
-    <div class="dev-verdict maybe">⚠️ DEPENDS — run yes, train maybe</div>
-    <div class="dev-body">
-      <b>Running your fine-tuned model: absolutely.</b> Ollama runs on CPU-only machines. A ThinkPad with 16GB+ RAM can run 7B quantized models at 5-8 tokens/sec — slower than GPU but totally usable for cybersecurity work.
-      <br><br>
-      <b>Fine-tuning on a ThinkPad:</b> Only if it has a discrete NVIDIA GPU (RTX 3060+ with 6GB+ VRAM). Most ThinkPads don't. For ThinkPads without a GPU: <b>fine-tune in the cloud for $2-5</b>, then download and run the model locally.
-      <br><br>
-      <b>Pro trick:</b> Install Ollama on both your ThinkPad and a GPU machine. Use <b>Tailscale</b> to tunnel — your ThinkPad sends prompts to the remote GPU and gets fast responses back. One user went from 178 seconds to 19 seconds this way.
+  <div class="grid2">
+    <div class="device">
+      <div class="dev-name">Local training (Mac M4)</div>
+      <div class="dev-verdict yes">YOUR HARDWARE</div>
+      <div class="dev-body">
+        <b style="color:var(--green)">Pro:</b> Free, private, learn the process hands-on<br>
+        <b style="color:var(--green)">Pro:</b> No upload of sensitive security data<br>
+        <b style="color:var(--red2)">Con:</b> Slow — 7B takes 2-6 hours, 13B practically overnight<br>
+        <b style="color:var(--red2)">Con:</b> Limited to smaller models (7B-13B max on 24GB)
+      </div>
     </div>
-    <div class="dev-specs">
-      <div class="dev-spec"><div class="ds-val">16 GB</div><div class="ds-label">Min. RAM for 7B</div></div>
-      <div class="dev-spec"><div class="ds-val">~8 t/s</div><div class="ds-label">CPU inference speed</div></div>
-      <div class="dev-spec"><div class="ds-val">$2-5</div><div class="ds-label">Cloud fine-tune cost</div></div>
-      <div class="dev-spec"><div class="ds-val">∞</div><div class="ds-label">Free after that</div></div>
+    <div class="device">
+      <div class="dev-name">Cloud GPU rental</div>
+      <div class="dev-verdict yes">RENTED HARDWARE</div>
+      <div class="dev-body">
+        <b style="color:var(--green)">Pro:</b> 10-20x faster, handles any model size<br>
+        <b style="color:var(--green)">Pro:</b> RTX 4090 ($0.40/hr), A100 ($1-3/hr), H100 ($3-5/hr)<br>
+        <b style="color:var(--red2)">Con:</b> Data leaves your machine<br>
+        <b style="color:var(--red2)">Con:</b> Need to set up environment each time (or use templates)
+      </div>
     </div>
   </div></div>
 
-  <!-- CLOUD -->
   <div class="rv d3">
-  <div class="device">
-    <div class="dev-icon">☁️</div>
-    <div class="dev-name">Cloud GPU (RunPod / Vast.ai)</div>
-    <div class="dev-verdict yes">✅ BEST for training</div>
-    <div class="dev-body">
-      Rent an <b>RTX 4090</b> for $0.40/hr or an <b>A100 80GB</b> for $1-3/hr. Fine-tune your model in 2-4 hours, download it, run it locally forever. Best option if your local machine doesn't have a GPU. <b>Google Colab free tier</b> also works for small models.
-    </div>
-    <div class="dev-specs">
-      <div class="dev-spec"><div class="ds-val">$2-5</div><div class="ds-label">7B model training</div></div>
-      <div class="dev-spec"><div class="ds-val">$5-15</div><div class="ds-label">13B model training</div></div>
-      <div class="dev-spec"><div class="ds-val">$20-60</div><div class="ds-label">70B model training</div></div>
-    </div>
+  <div class="banner banner-dim">
+    <div>💡</div>
+    <div><b style="color:var(--text)">Bottom line:</b> Train on cloud for speed, train locally for privacy. Either way, you run the final model locally for free.</div>
   </div></div>
 </div>
 </section>
@@ -320,19 +306,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
   Format: conversations — user asks a security question, assistant gives a detailed expert answer.
   <br><br>
   <b>Ready-to-use datasets:</b><br>
-  • <b>CyberLLMInstruct</b> — curated instruction dataset, benchmarked<br>
-  • <b>HackMentor</b> — CTF writeups, vuln analyses, security Q&A<br>
-  • <b>MITRE ATT&CK</b> — structured tactic/technique/procedure data<br>
-  • <b>Public HackerOne reports</b> — real bug bounty findings<br>
-  • <b>HTB/THM writeups</b> — machine solutions with methodology<br>
-  • <b>Kali tool man pages</b> — usage examples for nmap, sqlmap, etc.</div></div></div>
+  &bull; <b>CyberLLMInstruct</b> — curated instruction dataset, benchmarked<br>
+  &bull; <b>HackMentor</b> — CTF writeups, vuln analyses, security Q&amp;A<br>
+  &bull; <b>MITRE ATT&amp;CK</b> — structured tactic/technique/procedure data<br>
+  &bull; <b>Public HackerOne reports</b> — real bug bounty findings<br>
+  &bull; <b>HTB/THM writeups</b> — machine solutions with methodology<br>
+  &bull; <b>Kali tool man pages</b> — usage examples for nmap, sqlmap, etc.</div></div></div>
 
   <div class="rv d2">
   <div class="step"><div class="s-head"><div class="s-num">03</div><div class="s-title">Choose your training path</div></div>
   <div class="s-body">
-  <b>On Mac Mini (MLX):</b> <code style="color:var(--green)">pip install mlx-lm</code> → download model → one command to fine-tune<br><br>
-  <b>On NVIDIA GPU (Unsloth):</b> <code style="color:var(--green)">pip install unsloth</code> → 2x faster, 70% less VRAM<br><br>
-  <b>No-code option (LLaMA Factory):</b> web interface — point, click, train. No Python needed.<br><br>
+  <b>On Mac (MLX):</b> <code style="color:var(--green)">pip install mlx-lm</code> — slow but free and private<br><br>
+  <b>On NVIDIA GPU / Cloud (Unsloth):</b> <code style="color:var(--green)">pip install unsloth</code> — 2x faster, 70% less VRAM<br><br>
+  <b>No-code (LLaMA Factory):</b> web UI, point-click-train. No Python needed.<br><br>
   <b>Cloud (RunPod):</b> rent a GPU for $0.40-3/hr, use any of the above tools
   </div></div></div>
 
@@ -352,60 +338,186 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:h
 </div>
 </section>
 
-<!-- ██ 04: RUNNING ON YOUR LAPTOP ██ -->
+<!-- ██ 04: REMOTE DEPLOYMENT ██ -->
 <section class="sec sec-dark" id="s4">
 <div class="sec-inner">
-  <div class="rv"><div class="tag">04 — ON YOUR LAPTOP</div>
-  <div class="h2">Using your CyberLLM on a <span class="c">ThinkPad / Linux laptop</span></div>
-  <div class="desc">You fine-tuned in the cloud or on your Mac. Now you want it on your Kali laptop for fieldwork. Here's how.</div></div>
+  <div class="rv"><div class="tag">04 — REMOTE DEPLOYMENT</div>
+  <div class="h2">Run your model <span class="c">without local resources</span></div>
+  <div class="desc">Rent a cheap VPS, install Ollama, tunnel in with Tailscale. Your laptop just sends prompts — the server does all the compute.</div></div>
 
   <div class="rv d1">
   <div class="flow">
-    <div class="fn"><div class="fi">☁️</div><div class="ft">Train</div><div class="fs">Cloud / Mac</div></div>
+    <div class="fn"><div class="fi">💻</div><div class="ft">Your Laptop</div><div class="fs">Any OS</div></div>
     <div class="fa">→</div>
-    <div class="fn"><div class="fi">📦</div><div class="ft">Export GGUF</div><div class="fs">~4 GB file</div></div>
+    <div class="fn" style="border-color:rgba(6,182,212,.3)"><div class="fi">🔒</div><div class="ft" style="color:var(--cyan)">Tailscale</div><div class="fs">Encrypted tunnel</div></div>
     <div class="fa">→</div>
-    <div class="fn"><div class="fi">📡</div><div class="ft">Transfer</div><div class="fs">USB / SCP</div></div>
+    <div class="fn" style="border-color:rgba(168,85,247,.3)"><div class="fi">🖥️</div><div class="ft" style="color:var(--purple)">VPS</div><div class="fs">Ollama + Model</div></div>
     <div class="fa">→</div>
-    <div class="fn"><div class="fi">🐧</div><div class="ft">Kali laptop</div><div class="fs">Ollama</div></div>
-    <div class="fa">→</div>
-    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">🔓</div><div class="ft" style="color:var(--green)">Hack</div><div class="fs">Offline, free</div></div>
+    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">⚡</div><div class="ft" style="color:var(--green)">Response</div><div class="fs">Fast, remote</div></div>
   </div></div>
 
   <div class="rv d2">
   <div class="code">
-<span class="cm"># On your ThinkPad / Kali laptop:</span>
-
-<span class="cm"># 1. Install Ollama (one command)</span>
+<span class="cm"># On your VPS (Ubuntu):</span>
 <span class="cn">$</span> curl -fsSL https://ollama.com/install.sh | sh
-
-<span class="cm"># 2. Copy your model file over</span>
-<span class="cn">$</span> scp user@mac-mini:~/cyber-llama.gguf ./
-
-<span class="cm"># 3. Create Modelfile with persona</span>
-<span class="cn">$</span> cat > Modelfile << 'EOF'
-FROM ./cyber-llama.gguf
-SYSTEM "You are an expert pentester with deep
-knowledge of all Kali Linux tools."
-EOF
-
-<span class="cm"># 4. Build + run</span>
+<span class="cn">$</span> scp cyberllm.gguf user@vps:~/
 <span class="cn">$</span> ollama create cyberllm -f Modelfile
-<span class="cn">$</span> ollama run cyberllm
+<span class="cn">$</span> ollama serve  <span class="cm"># listens on 0.0.0.0:11434</span>
+
+<span class="cm"># On your laptop (any OS):</span>
+<span class="cn">$</span> tailscale up  <span class="cm"># connect to your Tailscale network</span>
+<span class="cn">$</span> OLLAMA_HOST=100.x.x.x:11434 ollama run cyberllm
+<span class="cm"># That's it — fast responses, zero local GPU needed</span>
   </div></div>
 
   <div class="rv d3">
   <div class="banner banner-go">
-    <div>🚀</div>
-    <div><b style="color:var(--green)">Speed trick:</b> If your ThinkPad is too slow (CPU-only = 5-8 tokens/sec), install <b>Tailscale</b> on both your laptop and a machine with a GPU. Point Ollama at the remote machine: <code style="color:var(--green)">OLLAMA_HOST=100.x.x.x:11434 ollama run cyberllm</code>. Your laptop sends prompts over the tunnel, the GPU does the work. One user went from 178s → 19s response time.</div>
+    <div>💡</div>
+    <div><b style="color:var(--green)">Cost:</b> ~$10/month for a VPS with 8GB RAM (Hostinger, Hetzner, DigitalOcean). Your model runs 24/7. Access from any device on your Tailscale network — laptop, phone, tablet.</div>
   </div></div>
 </div>
 </section>
 
-<!-- ██ 05: REMOVING GUARDRAILS ██ -->
+<!-- ██ 05: THE TERMINAL AGENT ██ -->
 <section class="sec sec-accent" id="s5">
 <div class="sec-inner">
-  <div class="rv"><div class="tag" style="color:var(--red)">05 — REMOVING GUARDRAILS</div>
+  <div class="rv"><div class="tag" style="color:var(--red)">05 — THE TERMINAL AGENT</div>
+  <div class="h2">Build your own <span class="r">Claude Code</span> for hacking</div>
+  <div class="desc">The goal: type <code style="color:var(--green)">cyberai</code> in your terminal, get a chat interface that can execute Kali tools, reason about results, and chain attacks — just like Claude Code but for pentesting.</div></div>
+
+  <div class="rv d1">
+  <p style="font-family:var(--head);font-size:22px;font-weight:700;margin-bottom:14px">How it works</p>
+  <div class="flow">
+    <div class="fn"><div class="fi">💬</div><div class="ft">You type</div><div class="fs">Prompt</div></div>
+    <div class="fa">→</div>
+    <div class="fn" style="border-color:var(--red3)"><div class="fi">🧠</div><div class="ft" style="color:var(--orange)">Agent reasons</div><div class="fs">Picks tool</div></div>
+    <div class="fa">→</div>
+    <div class="fn" style="border-color:rgba(245,158,11,.3)"><div class="fi">⚠️</div><div class="ft" style="color:var(--amber)">Permission</div><div class="fs">Y/n prompt</div></div>
+    <div class="fa">→</div>
+    <div class="fn" style="border-color:rgba(34,197,94,.3)"><div class="fi">⚡</div><div class="ft" style="color:var(--green)">Execute</div><div class="fs">nmap, sqlmap...</div></div>
+    <div class="fa">→</div>
+    <div class="fn"><div class="fi">🔄</div><div class="ft">Loop</div><div class="fs">Reason again</div></div>
+  </div></div>
+
+  <div class="rv d2">
+  <p style="font-family:var(--head);font-size:22px;font-weight:700;margin-bottom:14px">What you need</p>
+  <div class="grid2">
+    <div class="card"><div class="c-title" style="color:var(--red2)">Fine-tuned LLM</div><div class="c-sub">YOUR CYBERLLM FROM SECTION 03</div><div class="c-body">Trained on pentesting data, tool usage, CTF solutions. Knows when to use nmap vs sqlmap vs hashcat. Runs via Ollama locally or on your VPS.</div><div class="c-tags"><span class="c-tag hot">THE BRAIN</span></div></div>
+    <div class="card"><div class="c-title" style="color:var(--amber)">Agent framework</div><div class="c-sub">PYTHON WRAPPER SCRIPT (~100 LINES)</div><div class="c-body">Connects your model to a terminal. Sends prompts to Ollama, parses the response, executes shell commands, feeds output back. Options: LangChain agents, simple Python script, or custom shell wrapper.</div><div class="c-tags"><span class="c-tag">THE GLUE</span></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="c-title" style="color:var(--cyan)">Tool definitions</div><div class="c-sub">SYSTEM PROMPT OR TRAINING DATA</div><div class="c-body">Teach the model what tools are available: nmap (port scanning), sqlmap (SQL injection), gobuster (directory brute-force), hashcat (password cracking), nuclei (vulnerability scanning), etc. Include these in the system prompt or bake them into the training data.</div><div class="c-tags"><span class="c-tag">THE TOOLKIT</span></div></div>
+  </div>
+
+  <div class="rv d3">
+  <p style="font-family:var(--head);font-size:22px;font-weight:700;margin-bottom:14px">Example session</p>
+  <div class="code">
+<span class="cn">$</span> cyberai
+<span class="ck">CYBERAI v1.0</span> — Connected to CyberLLM (7B)
+
+<span class="cv">&gt; Scan 10.10.11.224 and find all open services</span>
+
+<span class="cm">[THINKING] Target appears to be a HTB machine. Starting with
+comprehensive nmap scan for service detection.</span>
+
+<span class="ck">[PERMISSION]</span> Execute: nmap -sV -sC -p- 10.10.11.224
+Allow? [Y/n] <span class="cv">y</span>
+
+<span class="cm">[EXECUTING] nmap -sV -sC -p- 10.10.11.224</span>
+PORT     STATE SERVICE  VERSION
+22/tcp   open  ssh      OpenSSH 8.9
+80/tcp   open  http     Apache 2.4.52
+8080/tcp open  http     Apache Tomcat 9.0.31
+
+<span class="cm">[THINKING] Port 8080 running Tomcat 9.0.31 — checking for
+known CVEs. This version is vulnerable to CVE-2024-50379.</span>
+
+<span class="cv">&gt; Try to exploit the Tomcat vulnerability</span>
+
+<span class="ck">[PERMISSION]</span> Execute: nuclei -t cves/ -target http://10.10.11.224:8080
+Allow? [Y/n] <span class="cv">y</span>
+  </div></div>
+
+  <div class="rv d4">
+  <div class="banner banner-red">
+    <div>⚠️</div>
+    <div><b style="color:var(--red2)">The permission system is not optional.</b> This is what separates a tool from a disaster. The model should: (1) explain what it wants to do, (2) show the exact command, (3) wait for your Y/n, (4) never run destructive commands without explicit approval. Build this into the agent wrapper, not the model — the model suggests, the wrapper enforces.</div>
+  </div></div>
+
+  <div class="rv d1">
+  <p style="font-family:var(--head);font-size:22px;font-weight:700;margin-bottom:14px">Building it — 3 steps</p>
+  <div class="step"><div class="s-head"><div class="s-num">01</div><div class="s-title">The wrapper script</div></div>
+  <div class="s-body">A Python script (~100 lines) that: connects to the <b>Ollama API</b>, sends messages, parses tool calls from the response, shows <b>[PERMISSION]</b> prompts, executes approved commands via <code style="color:var(--green)">subprocess</code>, feeds stdout/stderr back to the model. Point it at your VPS via Tailscale or run locally.</div></div></div>
+
+  <div class="rv d2">
+  <div class="step"><div class="s-head"><div class="s-num">02</div><div class="s-title">System prompt engineering</div></div>
+  <div class="s-body">Your model's system prompt defines its behavior: what tools it knows, how to format tool calls, when to ask permission, what its limits are. Include: <b>available tools list</b>, output format (THINKING/PERMISSION/EXECUTING blocks), rules (always ask before executing, never rm -rf, always explain reasoning).</div></div></div>
+
+  <div class="rv d3">
+  <div class="step"><div class="s-head"><div class="s-num">03</div><div class="s-title">Train on tool usage data</div></div>
+  <div class="s-body">Include in your fine-tuning dataset: examples of <b>multi-step pentests with tool calls</b>, CTF walkthroughs with exact commands used, Kali tool documentation with usage examples. The model needs to learn the pattern of: reason → pick tool → format command → wait for output → reason again.</div></div></div>
+
+  <div class="rv d4">
+  <p style="font-family:var(--head);font-size:22px;font-weight:700;margin-bottom:14px">CTF example</p>
+  <div class="code">
+<span class="cv">&gt; Find the flag on this machine. It's a CTF challenge.</span>
+
+<span class="cm">[THINKING] Starting standard CTF enumeration workflow.</span>
+
+<span class="ck">[PERMISSION]</span> Execute: nmap -sV 10.10.11.50
+Allow? [Y/n] <span class="cv">y</span>
+...
+<span class="cm">[THINKING] Found USB device mounted at /media/usb0.
+Checking for hidden partitions.</span>
+
+<span class="ck">[PERMISSION]</span> Execute: fdisk -l /dev/sdb
+Allow? [Y/n] <span class="cv">y</span>
+...
+<span class="cm">[THINKING] Hidden partition at /dev/sdb2. Mounting and
+checking for deleted files.</span>
+
+<span class="ck">[PERMISSION]</span> Execute: mount /dev/sdb2 /mnt/hidden &amp;&amp; photorec /mnt/hidden
+Allow? [Y/n] <span class="cv">y</span>
+...
+<span class="ck">[RESULT]</span> Flag found: <span class="cv">HTB{h1dd3n_p4rt1t10n_r3c0v3ry}</span>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 06: SMART GUARDRAILS ██ -->
+<section class="sec sec-dark" id="s6">
+<div class="sec-inner">
+  <div class="rv"><div class="tag">06 — SAFETY BY DESIGN</div>
+  <div class="h2">Smart <span class="g">guardrails</span> — not dumb ones</div>
+  <div class="desc">Your model should be uncensored for security knowledge but not uncontrolled. Knowledge is separate from permission.</div></div>
+
+  <div class="rv d1">
+  <div class="step" style="border-left-color:var(--green)"><div class="s-head"><div class="s-num" style="color:var(--green)">01</div><div class="s-title">Always ask permission</div></div>
+  <div class="s-body">The wrapper script shows every command before execution. The model proposes, you approve. <b>Never auto-execute.</b> Every single shell command goes through the Y/n gate — no exceptions.</div></div></div>
+
+  <div class="rv d2">
+  <div class="step" style="border-left-color:var(--cyan)"><div class="s-head"><div class="s-num" style="color:var(--cyan)">02</div><div class="s-title">Scope limits</div></div>
+  <div class="s-body">Define what networks and IPs the agent can target. Hardcode an <b>allowed scope</b> in the wrapper config — IP ranges, domains, ports. If the model generates a command targeting anything outside scope, the wrapper <b>blocks it automatically</b>.</div></div></div>
+
+  <div class="rv d3">
+  <div class="step" style="border-left-color:var(--red)"><div class="s-head"><div class="s-num" style="color:var(--red2)">03</div><div class="s-title">Destructive command blocklist</div></div>
+  <div class="s-body"><code style="color:var(--red2)">rm -rf /</code>, <code style="color:var(--red2)">mkfs</code>, <code style="color:var(--red2)">dd if=/dev/zero</code>, <code style="color:var(--red2)">:(){ :|:& };:</code> — hardcode a deny list in the wrapper. These commands get rejected even if you accidentally type Y. The wrapper is the last line of defense.</div></div></div>
+
+  <div class="rv d4">
+  <div class="step" style="border-left-color:var(--amber)"><div class="s-head"><div class="s-num" style="color:var(--amber)">04</div><div class="s-title">Log everything</div></div>
+  <div class="s-body">Every command, every output, every model response — <b>timestamped and saved to a log file</b>. For accountability, for learning, and for writing up your pentest report later. The log is also useful for improving your training data.</div></div></div>
+
+  <div class="rv d4">
+  <div class="banner banner-go">
+    <div>💡</div>
+    <div><b style="color:var(--green)">The model knows how to hack. The wrapper decides what it's allowed to do.</b> Separate knowledge from permission — that's the whole design. The model is uncensored. The wrapper is strict. Together they form a controlled tool, not a loose cannon.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ██ 07: REMOVING GUARDRAILS ██ -->
+<section class="sec sec-accent" id="s7">
+<div class="sec-inner">
+  <div class="rv"><div class="tag" style="color:var(--red)">07 — REMOVING GUARDRAILS</div>
   <div class="h2">Making it <span class="r">stop saying no</span></div>
   <div class="desc">Three proven approaches, from gentle to nuclear.</div></div>
 
@@ -429,10 +541,10 @@ EOF
 </div>
 </section>
 
-<!-- ██ 06: EXISTING MODELS ██ -->
-<section class="sec sec-dark" id="s6">
+<!-- ██ 08: EXISTING MODELS ██ -->
+<section class="sec sec-dark" id="s8">
 <div class="sec-inner">
-  <div class="rv"><div class="tag">06 — DON'T START FROM SCRATCH</div>
+  <div class="rv"><div class="tag">08 — DON'T START FROM SCRATCH</div>
   <div class="h2">Models already built for <span class="p">security</span></div></div>
 
   <div class="rv d1">
@@ -445,10 +557,10 @@ EOF
 </div>
 </section>
 
-<!-- ██ 07: TOOLS ██ -->
-<section class="sec" id="s7">
+<!-- ██ 09: TOOLS ██ -->
+<section class="sec" id="s9">
 <div class="sec-inner">
-  <div class="rv"><div class="tag">07 — TOOLCHAIN</div>
+  <div class="rv"><div class="tag">09 — TOOLCHAIN</div>
   <div class="h2">The tools that <span class="a">make it easy</span></div></div>
 
   <div class="rv d1">
@@ -461,10 +573,10 @@ EOF
 </div>
 </section>
 
-<!-- ██ 08: SOURCES ██ -->
-<section class="sec sec-dark" id="s8">
+<!-- ██ 10: SOURCES ██ -->
+<section class="sec sec-dark" id="s10">
 <div class="sec-inner">
-  <div class="rv"><div class="tag">08 — SOURCES & LEARNING</div>
+  <div class="rv"><div class="tag">10 — SOURCES & LEARNING</div>
   <div class="h2">Go <span class="g">deeper</span></div></div>
 
   <div class="rv d1">
@@ -484,7 +596,7 @@ EOF
     <li><div class="st">Local LLM Fine-Tuning on Mac M1 16GB</div><div class="su">towardsdatascience.com — Shaw Talebi</div><div class="sd">Proof that even an M1 Mac Mini with 16GB can fine-tune Mistral 7B</div></li>
     <li><div class="st">QLoRA on Consumer GPU — Stack Junkie</div><div class="su">stack-junkie.com/blog/lora-fine-tuning-consumer-gpu</div><div class="sd">RTX 3060 to 4090 benchmarks, troubleshooting, practical tips</div></li>
     <li><div class="st">Unsloth LoRA Hyperparameters Guide</div><div class="su">unsloth.ai/docs — official docs</div><div class="sd">The tuning bible — rank, alpha, learning rate, batch size, all explained</div></li>
-    <li><div class="st">GPU Sharing: ThinkPad Borrows Remote GPU via Tailscale</div><div class="su">insiderllm.com/blog/mycoswarm-wifi-laptop-borrowed-gpu</div><div class="sd">How to use a fast GPU from your slow laptop — 178s → 19s</div></li>
+    <li><div class="st">GPU Sharing: ThinkPad Borrows Remote GPU via Tailscale</div><div class="su">insiderllm.com/blog/mycoswarm-wifi-laptop-borrowed-gpu</div><div class="sd">How to use a fast GPU from your slow laptop — 178s to 19s</div></li>
   </ul></div>
 
   <div class="rv d3">
@@ -497,6 +609,8 @@ EOF
     <li><div class="st">LLaMA Factory — No-code fine-tuning UI</div><div class="su">github.com/hiyouga/LLaMA-Factory</div></li>
     <li><div class="st">Ollama — Run models locally</div><div class="su">ollama.com</div></li>
     <li><div class="st">RunPod — Rent GPUs by the hour</div><div class="su">runpod.io</div></li>
+    <li><div class="st">Tailscale — Secure mesh VPN for tunneling</div><div class="su">tailscale.com</div></li>
+    <li><div class="st">LangChain — Agent framework for LLM tool use</div><div class="su">github.com/langchain-ai/langchain</div></li>
   </ul></div>
 </div>
 </section>
